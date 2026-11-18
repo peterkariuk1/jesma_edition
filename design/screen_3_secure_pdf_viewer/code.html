@@ -1,0 +1,638 @@
+<!DOCTYPE html><html lang="en" class="dark select-none"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CSOK JESMA — Secure PDF Examination Viewer</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script id="tailwind-config">/** @type {import('tailwindcss').Config} */
+globalThis.tailwind = globalThis.tailwind || {};
+globalThis.tailwind.config = {
+  darkMode: 'class',
+  theme: {
+    extend: {
+      colors: {
+        'accent': '#F07845',
+        'warning': '#F4B84A',
+        'error': '#E45D54',
+        'success': '#83B99A',
+        'outline': '#2A2624',
+        'outline-variant': '#383330',
+        'paper-bg': '#FAF8F5',
+        'paper-text': '#1E1C1A',
+        'paper-border': '#D5CDC5',
+        'paper-muted': '#524B43',
+        'paper-box': '#F2EDE8',
+        'warm-badge': '#2A1E18',
+        'editorial-cream': '#E8DCCB',
+        'light-primary': '#0B0A09',
+        'light-on-primary': '#F5F2EE',
+        'light-surface': '#151312',
+        'light-on-surface': '#F5F2EE',
+        'light-surface-container': '#191716',
+        'light-on-surface-variant': '#A7A09A',
+        'dark-primary': '#F07845',
+        'dark-on-primary': '#0B0A09',
+        'dark-surface': '#0B0A09',
+        'dark-on-surface': '#F5F2EE',
+        'dark-surface-container': '#191716',
+        'dark-on-surface-variant': '#A7A09A',
+      },
+      borderRadius: {
+        'sm': '6px',
+        'DEFAULT': '12px',
+        'md': '16px',
+        'lg': '24px',
+        'xl': '32px',
+        'full': '9999px',
+      },
+      spacing: {
+        'gutter-xs': '4px',
+        'gutter-sm': '8px',
+        'gutter-md': '16px',
+        'gutter-lg': '24px',
+        'gutter-xl': '32px',
+        'section': '48px',
+        'page-margin': '24px',
+      },
+      fontFamily: {
+        'display': ['"Playfair Display"', 'sans-serif'],
+        'headline': ['"Instrument Sans"', 'sans-serif'],
+        'title': ['"Instrument Sans"', 'sans-serif'],
+        'body': ['"Instrument Sans"', 'sans-serif'],
+        'label': ['"Instrument Sans"', 'sans-serif'],
+        'code': ['"Source Code Pro"', 'monospace'],
+      },
+      fontSize: {
+        'display-lg': ['56px', { lineHeight: '64px', letterSpacing: '-1px', fontWeight: '600' }],
+        'display-lg-mobile': ['32px', { lineHeight: '40px', letterSpacing: '-0.5px', fontWeight: '600' }],
+        'headline-xl': ['40px', { lineHeight: '48px', letterSpacing: '-0.5px', fontWeight: '600' }],
+        'headline-xl-mobile': ['28px', { lineHeight: '36px', letterSpacing: '-0.25px', fontWeight: '600' }],
+        'headline-lg': ['32px', { lineHeight: '40px', letterSpacing: '-0.5px', fontWeight: '600' }],
+        'headline-lg-mobile': ['24px', { lineHeight: '32px', letterSpacing: '-0.25px', fontWeight: '600' }],
+        'headline-md': ['24px', { lineHeight: '32px', letterSpacing: '0px', fontWeight: '600' }],
+        'title-lg': ['20px', { lineHeight: '28px', letterSpacing: '0px', fontWeight: '600' }],
+        'title-md': ['16px', { lineHeight: '24px', letterSpacing: '0px', fontWeight: '500' }],
+        'body-lg': ['18px', { lineHeight: '28px', letterSpacing: '0.15px', fontWeight: '400' }],
+        'body-md': ['15px', { lineHeight: '22px', letterSpacing: '0.25px', fontWeight: '400' }],
+        'body-sm': ['13px', { lineHeight: '18px', letterSpacing: '0.25px', fontWeight: '400' }],
+        'label-lg': ['14px', { lineHeight: '20px', letterSpacing: '0.5px', fontWeight: '600' }],
+        'label-sm': ['12px', { lineHeight: '16px', letterSpacing: '0.5px', fontWeight: '500' }],
+        'code-sm': ['12px', { lineHeight: '16px', letterSpacing: '0px', fontWeight: '500' }],
+      },
+      transitionDuration: {
+        'state-change': '150ms',
+        'surface-enter': '250ms',
+        'surface-exit': '150ms',
+      },
+      transitionDelay: {
+        'state-change': '0ms',
+        'surface-enter': '0ms',
+        'surface-exit': '0ms',
+      },
+      transitionTimingFunction: {
+        'state-change': 'cubic-bezier(0.4, 0, 0.2, 1)',
+        'surface-enter': 'cubic-bezier(0.16, 1, 0.3, 1)',
+        'surface-exit': 'cubic-bezier(0.4, 0, 1, 1)',
+      },
+    },
+  },
+};
+if (typeof module !== 'undefined') module.exports = globalThis.tailwind.config;
+</script>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&amp;family=Playfair+Display:ital,wght@0,600;1,600&amp;family=Source+Code+Pro:wght@400;500;600&amp;display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=block" rel="stylesheet">
+  <style>
+    .material-symbols-outlined, .material-symbols-rounded, .material-symbols-sharp, .material-icons {
+      display: inline-block; width: 1em; height: 1em; line-height: 1 !important; box-sizing: content-box; overflow: hidden; white-space: nowrap; direction: ltr; vertical-align: middle;
+    }
+    /* Strictly disable text selection, dragging, and inspect gestures */
+    * {
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+      -webkit-touch-callout: none;
+    }
+    @media print {
+      body { display: none !important; }
+    }
+  </style>
+</head>
+<body class="bg-dark-surface text-dark-on-surface font-body antialiased min-h-[1024px] flex flex-col justify-between relative overflow-hidden" oncontextmenu="return false;" data-stitch-vh="min-h-[1024px]===min-h-screen">
+
+  <!-- ========================================================================= -->
+  <!-- TOP BAR: IMMERSIVE, RESTRAINED EXAMINATION HUD                           -->
+  <!-- ========================================================================= -->
+  <header class="relative z-30 w-full bg-light-surface border-b border-outline px-6 py-3.5 flex items-center justify-between flex-shrink-0 shadow-md">
+    
+    <!-- Left: Brand, Exam Title & Secure Badge -->
+    <div class="flex items-center gap-4">
+      <div class="flex items-center gap-2.5">
+        <div class="w-7 h-7 rounded-full bg-dark-surface-container border border-outline flex items-center justify-center text-accent">
+          <span class="material-symbols-outlined text-[16px]">verified_user</span>
+        </div>
+        <span class="font-headline font-semibold text-title-md text-light-on-primary tracking-tight">CSOK JESMA</span>
+      </div>
+
+      <div class="h-4 w-px bg-outline hidden sm:block"></div>
+
+      <div class="hidden md:flex items-center gap-2">
+        <span class="font-label text-label-sm font-semibold text-dark-on-surface">Paper 1: General Science &amp; Logic</span>
+        <span class="px-2 py-0.5 rounded-full bg-dark-surface font-code text-code-sm text-dark-on-surface-variant border border-outline">BUNDLE_REF_8812</span>
+      </div>
+
+      <div class="flex items-center gap-1.5 px-3 py-1 rounded-full bg-success/10 border border-success/30 text-success font-label text-label-sm font-medium">
+        <span class="w-1.5 h-1.5 rounded-full bg-success animate-pulse"></span>
+        <span class="hidden sm:inline">Encrypted Viewer Session</span>
+        <span class="sm:hidden">Secure</span>
+      </div>
+    </div>
+
+    <!-- Center: Page Controls -->
+    <div class="flex items-center gap-2 bg-dark-surface px-3 py-1.5 rounded-full border border-outline">
+      <button id="btn-prev-page" type="button" onclick="changePage(-1)" aria-label="Previous Page" class="w-7 h-7 rounded-full hover:bg-dark-surface-container flex items-center justify-center text-dark-on-surface-variant hover:text-dark-on-surface transition-colors disabled:opacity-30 disabled:pointer-events-none">
+        <span class="material-symbols-outlined text-[18px]">chevron_left</span>
+      </button>
+
+      <div class="font-code text-code-sm font-medium text-dark-on-surface px-2 tabular-nums">
+        Page <span id="current-page-display" class="text-accent font-semibold">1</span> of <span id="total-page-display">4</span>
+      </div>
+
+      <button id="btn-next-page" type="button" onclick="changePage(1)" aria-label="Next Page" class="w-7 h-7 rounded-full hover:bg-dark-surface-container flex items-center justify-center text-dark-on-surface-variant hover:text-dark-on-surface transition-colors">
+        <span class="material-symbols-outlined text-[18px]">chevron_right</span>
+      </button>
+
+      <div class="h-3 w-px bg-outline mx-1"></div>
+
+      <!-- Zoom simulation -->
+      <button type="button" onclick="toggleZoom()" title="Toggle Zoom Scaling" class="w-7 h-7 rounded-full hover:bg-dark-surface-container flex items-center justify-center text-dark-on-surface-variant hover:text-dark-on-surface transition-colors">
+        <span id="zoom-icon" class="material-symbols-outlined text-[16px]">fit_screen</span>
+      </button>
+    </div>
+
+    <!-- Right: Countdown Timer & Invigilation Alerts -->
+    <div class="flex items-center gap-4">
+      <div class="flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-dark-surface-container border border-accent/30 text-accent">
+        <span class="material-symbols-outlined text-[17px]">timer</span>
+        <div class="font-code text-code-sm font-semibold tabular-nums tracking-wider" id="exam-timer">
+          01:28:44
+        </div>
+      </div>
+
+      <!-- Prototype Violation Trigger Button -->
+      <div class="hidden lg:flex items-center gap-2">
+        <button type="button" onclick="triggerWarning(&#39;blur&#39;)" class="px-3 py-1 rounded-full font-label text-label-sm whitespace-nowrap bg-dark-surface border border-warning/40 text-warning hover:bg-warning/10 transition-colors">
+          Simulate Unfocus
+        </button>
+        <button type="button" onclick="triggerWarning(&#39;severe&#39;)" class="px-3 py-1 rounded-full font-label text-label-sm whitespace-nowrap bg-dark-surface border border-error/40 text-error hover:bg-error/10 transition-colors">
+          Simulate Violation
+        </button>
+      </div>
+
+      <a href="../waiting-room/WaitingRoom.html?view=pupil" title="Exit to Waiting Room" class="w-8 h-8 rounded-full bg-dark-surface border border-outline hover:border-error hover:text-error flex items-center justify-center text-dark-on-surface-variant transition-colors">
+        <span class="material-symbols-outlined text-[18px]">logout</span>
+      </a>
+    </div>
+  </header>
+
+
+  <!-- ========================================================================= -->
+  <!-- MAIN AREA: PRELOADED BUNDLED PDF DOCUMENT VIEWER                          -->
+  <!-- ========================================================================= -->
+  <main class="relative z-10 flex-1 bg-dark-surface overflow-y-auto p-4 sm:p-8 flex justify-center items-start">
+    
+    <!-- Central Document Canvas Frame (Scaled to authentic high-fidelity exam format) -->
+    <div id="document-viewport" class="w-full max-w-[840px] bg-paper-bg text-paper-text rounded-lg shadow-2xl p-8 sm:p-14 border border-paper-border transition-transform duration-300 relative" style="min-height: 1080px;">
+      
+      <!-- PDF Security Scrim Layer -->
+      <div class="absolute inset-0 pointer-events-none overflow-hidden select-none bg-[radial-gradient(#d5cdc5_1px,transparent_1px)] [background-size:24px_24px] opacity-40" aria-hidden="true"></div>
+
+      <!-- PAGE 1 CONTENT -->
+      <section id="doc-page-1" class="doc-page flex flex-col justify-between h-full">
+        <div>
+          <!-- Document Header -->
+          <div class="border-b-2 border-paper-text pb-6 mb-8 text-center">
+            <div class="flex items-center justify-between font-code text-code-sm font-bold tracking-wider text-paper-muted mb-2 uppercase">
+              <span>CSOK ACADEMIC CLUBS</span>
+              <span>INDEX: 2026-P1-SC</span>
+              <span>TIME: 1 HOUR 30 MINS</span>
+            </div>
+            <h1 class="font-display text-headline-lg font-bold uppercase tracking-tight text-paper-text mb-1">
+              Jesma Joint Evaluation Series 2026
+            </h1>
+            <h2 class="font-display italic text-title-lg text-paper-muted">
+              General Science, Logic &amp; Quantitative Reasoning — Paper 1
+            </h2>
+          </div>
+
+          <!-- Strict Exam Instructions Box -->
+          <div class="p-4 rounded border border-paper-border bg-paper-box mb-8 font-body text-body-sm leading-relaxed text-paper-text">
+            <p class="font-bold uppercase tracking-wide mb-1 text-paper-text">Read the following instructions carefully:</p>
+            <ol class="list-decimal list-inside space-y-1">
+              <li>This paper consists of <strong>4 pages</strong> and <strong>25 multiple choice questions</strong>.</li>
+              <li>Record all your answers on the <strong>SEPARATE PHYSICAL ANSWER SHEET</strong> provided by your teacher.</li>
+              <li>Do NOT attempt to type, submit, or click answers inside this viewing application.</li>
+              <li>Leaving this window, splitting screens, or capturing screenshots will log a violation with your teacher.</li>
+            </ol>
+          </div>
+
+          <!-- Questions 1 to 5 -->
+          <div class="space-y-6 font-display text-body-md text-paper-text leading-normal">
+            <div>
+              <p class="font-bold mb-2">
+                1. Which of the following organelles is primarily responsible for ATP synthesis via oxidative phosphorylation in eukaryotic cells?
+              </p>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pl-4 font-headline text-body-sm">
+                <div>[A] Ribosome</div>
+                <div>[B] Mitochondrion</div>
+                <div>[C] Endoplasmic reticulum</div>
+                <div>[D] Golgi apparatus</div>
+              </div>
+            </div>
+
+            <div>
+              <p class="font-bold mb-2">
+                2. An object accelerates uniformly from rest at a rate of 3.2 m/s² for 8 seconds. What total distance does it cover during this interval?
+              </p>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pl-4 font-headline text-body-sm">
+                <div>[A] 25.6 m</div>
+                <div>[B] 51.2 m</div>
+                <div>[C] 102.4 m</div>
+                <div>[D] 204.8 m</div>
+              </div>
+            </div>
+
+            <div>
+              <p class="font-bold mb-2">
+                3. In Mendelian genetics, a dihybrid cross between two heterozygous individuals (AaBb × AaBb) with independent assortment yields which phenotypic ratio?
+              </p>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pl-4 font-headline text-body-sm">
+                <div>[A] 3 : 1</div>
+                <div>[B] 9 : 3 : 3 : 1</div>
+                <div>[C] 1 : 2 : 1</div>
+                <div>[D] 9 : 7</div>
+              </div>
+            </div>
+
+            <div>
+              <p class="font-bold mb-2">
+                4. Which reagent is traditionally used to detect the presence of reducing sugars in an aqueous biological sample when heated?
+              </p>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pl-4 font-headline text-body-sm">
+                <div>[A] Biuret reagent</div>
+                <div>[B] Iodine solution</div>
+                <div>[C] Benedict’s solution</div>
+                <div>[D] Sudan III dye</div>
+              </div>
+            </div>
+
+            <div>
+              <p class="font-bold mb-2">
+                5. A gas occupies 4.0 litres at a pressure of 100 kPa. If the temperature remains constant and pressure increases to 250 kPa, what is the new volume?
+              </p>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pl-4 font-headline text-body-sm">
+                <div>[A] 1.6 litres</div>
+                <div>[B] 2.5 litres</div>
+                <div>[C] 6.25 litres</div>
+                <div>[D] 10.0 litres</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-12 pt-4 border-t border-paper-border flex items-center justify-between font-code text-code-sm text-paper-muted font-medium">
+          <span>CSOK JESMA 2026 • OFFICIAL EVALUATION</span>
+          <span>PAGE 1 OF 4 — TURN OVER</span>
+        </div>
+      </section>
+
+      <!-- PAGE 2 CONTENT (Hidden by default) -->
+      <section id="doc-page-2" class="doc-page hidden flex-col justify-between h-full">
+        <div>
+          <div class="border-b border-paper-text pb-3 mb-6 flex items-center justify-between font-code text-code-sm font-bold text-paper-muted">
+            <span>JESMA EVALUATION 2026 — PAPER 1</span>
+            <span>SECTION B: LOGIC &amp; QUANTITATIVE ANALYSIS</span>
+          </div>
+
+          <div class="space-y-6 font-display text-body-md text-paper-text leading-normal">
+            <div>
+              <p class="font-bold mb-2">
+                6. Consider the sequence: 4, 9, 25, 49, 121, 169, ... What is the immediate next prime-square integer in this progression?
+              </p>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pl-4 font-headline text-body-sm">
+                <div>[A] 225</div>
+                <div>[B] 256</div>
+                <div>[C] 289</div>
+                <div>[D] 361</div>
+              </div>
+            </div>
+
+            <div>
+              <p class="font-bold mb-2">
+                7. If all Zorks are Florgs, and some Florgs are Snaps, but no Snap is a Plumb, which deduction is logically necessary?
+              </p>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pl-4 font-headline text-body-sm">
+                <div>[A] Some Zorks are Plumbs</div>
+                <div>[B] No Zork is a Snap</div>
+                <div>[C] Some Florgs are not Plumbs</div>
+                <div>[D] All Florgs are Zorks</div>
+              </div>
+            </div>
+
+            <div>
+              <p class="font-bold mb-2">
+                8. The pH of a 0.001 M hydrochloric acid (HCl) solution completely dissociated in pure water at 25°C is:
+              </p>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pl-4 font-headline text-body-sm">
+                <div>[A] 1.0</div>
+                <div>[B] 2.0</div>
+                <div>[C] 3.0</div>
+                <div>[D] 4.0</div>
+              </div>
+            </div>
+
+            <div>
+              <p class="font-bold mb-2">
+                9. Calculate the equivalent resistance of three resistors (6Ω, 3Ω, and 2Ω) connected in parallel across an ideal voltage source:
+              </p>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pl-4 font-headline text-body-sm">
+                <div>[A] 1.0 Ω</div>
+                <div>[B] 2.0 Ω</div>
+                <div>[C] 3.6 Ω</div>
+                <div>[D] 11.0 Ω</div>
+              </div>
+            </div>
+
+            <div>
+              <p class="font-bold mb-2">
+                10. What is the derivative of f(x) = 3x² · eˣ with respect to x?
+              </p>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pl-4 font-headline text-body-sm">
+                <div>[A] 6x · eˣ</div>
+                <div>[B] 3x(x + 2) · eˣ</div>
+                <div>[C] (3x² + 6x)</div>
+                <div>[D] 6x · e^(x-1)</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-12 pt-4 border-t border-paper-border flex items-center justify-between font-code text-code-sm text-paper-muted font-medium">
+          <span>CSOK JESMA 2026 • OFFICIAL EVALUATION</span>
+          <span>PAGE 2 OF 4 — TURN OVER</span>
+        </div>
+      </section>
+
+      <!-- PAGE 3 CONTENT -->
+      <section id="doc-page-3" class="doc-page hidden flex-col justify-between h-full">
+        <div>
+          <div class="border-b border-paper-text pb-3 mb-6 flex items-center justify-between font-code text-code-sm font-bold text-paper-muted">
+            <span>JESMA EVALUATION 2026 — PAPER 1</span>
+            <span>SECTION C: EXPERIMENTAL ANALYSIS</span>
+          </div>
+
+          <div class="space-y-6 font-display text-body-md text-paper-text leading-normal">
+            <div>
+              <p class="font-bold mb-2">
+                11. During an exothermic reaction in a coffee-cup calorimeter, 50 g of water rises in temperature by 6.0°C. Specific heat capacity of water is 4.184 J/g°C. The energy released is:
+              </p>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pl-4 font-headline text-body-sm">
+                <div>[A] 1.255 kJ</div>
+                <div>[B] 2.510 kJ</div>
+                <div>[C] 4.184 kJ</div>
+                <div>[D] 12.55 kJ</div>
+              </div>
+            </div>
+
+            <div>
+              <p class="font-bold mb-2">
+                12. Which hormone is released by the beta cells of the Islets of Langerhans in response to elevated blood glucose levels?
+              </p>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pl-4 font-headline text-body-sm">
+                <div>[A] Glucagon</div>
+                <div>[B] Insulin</div>
+                <div>[C] Somatostatin</div>
+                <div>[D] Epinephrine</div>
+              </div>
+            </div>
+
+            <div>
+              <p class="font-bold mb-2">
+                13. An electromagnetic wave has a frequency of 6.0 × 10¹⁴ Hz. Given speed of light c = 3.0 × 10⁸ m/s, its wavelength in nanometres is:
+              </p>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pl-4 font-headline text-body-sm">
+                <div>[A] 350 nm</div>
+                <div>[B] 500 nm</div>
+                <div>[C] 600 nm</div>
+                <div>[D] 750 nm</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-12 pt-4 border-t border-paper-border flex items-center justify-between font-code text-code-sm text-paper-muted font-medium">
+          <span>CSOK JESMA 2026 • OFFICIAL EVALUATION</span>
+          <span>PAGE 3 OF 4 — TURN OVER</span>
+        </div>
+      </section>
+
+      <!-- PAGE 4 CONTENT -->
+      <section id="doc-page-4" class="doc-page hidden flex-col justify-between h-full">
+        <div>
+          <div class="border-b border-paper-text pb-3 mb-6 flex items-center justify-between font-code text-code-sm font-bold text-paper-muted">
+            <span>JESMA EVALUATION 2026 — PAPER 1</span>
+            <span>END OF PAPER INSTRUCTIONS</span>
+          </div>
+
+          <div class="space-y-6 font-display text-body-md text-paper-text leading-normal">
+            <div>
+              <p class="font-bold mb-2">
+                14. In modern cryptographic standards, what is the primary computational hardness assumption underlying the RSA algorithm?
+              </p>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pl-4 font-headline text-body-sm">
+                <div>[A] Discrete logarithm problem</div>
+                <div>[B] Integer factorization of large semiprimes</div>
+                <div>[C] Elliptic curve point multiplication</div>
+                <div>[D] Subset sum problem</div>
+              </div>
+            </div>
+
+            <div class="p-6 rounded-lg bg-paper-box border border-paper-border text-center my-8">
+              <span class="material-symbols-outlined text-[36px] text-paper-muted mb-2">task_alt</span>
+              <h3 class="font-bold font-display text-title-lg text-paper-text">END OF EXAMINATION QUESTIONS</h3>
+              <p class="font-body text-body-sm text-paper-muted mt-1 max-w-md mx-auto">
+                Check that you have transferred all responses to your official paper answer sheet.
+                Remain seated quietly until your teacher collects the papers and issues the dismiss command.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-12 pt-4 border-t border-paper-border flex items-center justify-between font-code text-code-sm text-paper-muted font-medium">
+          <span>CSOK JESMA 2026 • OFFICIAL EVALUATION</span>
+          <span>PAGE 4 OF 4 — END OF PAPER</span>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+
+  <!-- ========================================================================= -->
+  <!-- BOTTOM SECURITY STRIP: INTEGRITY MONITORS & STATUS                         -->
+  <!-- ========================================================================= -->
+  <footer class="relative z-30 w-full bg-light-surface border-t border-outline px-6 py-2 flex flex-col sm:flex-row items-center justify-between font-code text-code-sm text-dark-on-surface-variant">
+    <div class="flex items-center gap-4">
+      <span class="flex items-center gap-1.5 text-success">
+        <span class="w-1.5 h-1.5 rounded-full bg-success"></span>
+        FOCUS_MONITOR: ACTIVE
+      </span>
+      <span>•</span>
+      <span>CLIPBOARD: LOCKED</span>
+      <span>•</span>
+      <span>PRINTING: DISABLED</span>
+    </div>
+    <div class="flex items-center gap-3">
+      <span>VIOLATIONS RECORDED: <span id="violation-count" class="text-light-on-primary font-bold">0</span></span>
+      <span>•</span>
+      <span>INVIGILATOR: CONNECTED</span>
+    </div>
+  </footer>
+
+
+  <!-- ========================================================================= -->
+  <!-- SECURITY WARNING OVERLAY MODAL (AMBER & RED VIOLATION SYSTEM)             -->
+  <!-- ========================================================================= -->
+  <div id="security-modal" class="fixed inset-0 z-50 bg-dark-surface/90 backdrop-blur-md hidden items-center justify-center p-4 transition-all duration-surface-enter">
+    <!-- Amber Warning: Application switching / focus loss -->
+    <div id="modal-amber-box" class="max-w-md w-full p-8 rounded-2xl bg-light-surface-container border border-warning/50 shadow-2xl relative flex flex-col items-center text-center">
+      <div class="w-16 h-16 rounded-full bg-warning/10 border border-warning/30 flex items-center justify-center text-warning mb-5">
+        <span class="material-symbols-outlined text-[32px]">warning</span>
+      </div>
+
+      <span class="font-label text-label-sm uppercase tracking-widest font-semibold text-warning mb-1">Security Alert</span>
+      <h2 class="text-headline-md font-headline font-semibold text-light-on-primary mb-3">
+        Stay in your examination.
+      </h2>
+      <p class="font-body text-body-md text-dark-on-surface-variant mb-6 text-pretty">
+        You have left the examination environment. This activity has been recorded. Repeated violations may result in removal.
+      </p>
+
+      <button type="button" onclick="dismissWarning()" class="w-full py-3 rounded-full bg-warning hover:bg-warning/90 text-dark-surface font-headline font-semibold text-label-lg transition-transform hover:scale-[1.01] shadow-lg cursor-pointer">
+        RETURN TO EXAMINATION
+      </button>
+
+      <span class="font-code text-code-sm text-dark-on-surface-variant mt-4">Telemetry timestamp logged to invigilator hub</span>
+    </div>
+
+    <!-- Red Serious Violation: Escalated removal / restriction -->
+    <div id="modal-red-box" class="hidden max-w-md w-full p-8 rounded-2xl bg-light-surface-container border border-error/50 shadow-2xl relative flex flex-col items-center text-center">
+      <div class="w-16 h-16 rounded-full bg-error/10 border border-error/30 flex items-center justify-center text-error mb-5">
+        <span class="material-symbols-outlined text-[32px]">gpp_bad</span>
+      </div>
+
+      <span class="font-label text-label-sm uppercase tracking-widest font-semibold text-error mb-1">Examination Terminated</span>
+      <h2 class="text-headline-md font-headline font-semibold text-light-on-primary mb-3">
+        Examination access restricted.
+      </h2>
+      <p class="font-body text-body-md text-dark-on-surface-variant mb-6 text-pretty">
+        Your session has been flagged for repeated security violations. Access to this paper has been terminated by the proctor system.
+      </p>
+
+      <a href="../waiting-room/WaitingRoom.html?view=pupil" class="w-full py-3 rounded-full bg-error hover:bg-error/90 text-light-on-primary font-headline font-semibold text-label-lg text-center transition-transform hover:scale-[1.01] shadow-lg cursor-pointer block">
+        Acknowledge and Exit
+      </a>
+
+      <span class="font-code text-code-sm text-error mt-4">SESSION_REVOKED_CODE: 403_PROCTOR_RESTRICT</span>
+    </div>
+  </div>
+
+
+  <!-- ========================================================================= -->
+  <!-- CLIENT LOGIC & SECURITY ENFORCEMENT                                      -->
+  <!-- ========================================================================= -->
+  <script>
+    let currentPage = 1;
+    const totalPages = 4;
+    let violations = 0;
+    let isZoomed = false;
+
+    function changePage(delta) {
+      const newPage = currentPage + delta;
+      if (newPage >= 1 && newPage <= totalPages) {
+        document.getElementById(`doc-page-${currentPage}`).classList.add('hidden');
+        document.getElementById(`doc-page-${currentPage}`).classList.remove('flex');
+        currentPage = newPage;
+        document.getElementById(`doc-page-${currentPage}`).classList.remove('hidden');
+        document.getElementById(`doc-page-${currentPage}`).classList.add('flex');
+
+        document.getElementById('current-page-display').innerText = currentPage;
+        document.getElementById('btn-prev-page').disabled = (currentPage === 1);
+        document.getElementById('btn-next-page').disabled = (currentPage === totalPages);
+      }
+    }
+
+    function toggleZoom() {
+      const doc = document.getElementById('document-viewport');
+      const icon = document.getElementById('zoom-icon');
+      isZoomed = !isZoomed;
+      if (isZoomed) {
+        doc.style.transform = 'scale(1.06)';
+        doc.style.transformOrigin = 'top center';
+        icon.innerText = 'zoom_out';
+      } else {
+        doc.style.transform = 'scale(1)';
+        icon.innerText = 'fit_screen';
+      }
+    }
+
+    function triggerWarning(type) {
+      violations++;
+      document.getElementById('violation-count').innerText = violations;
+
+      const modal = document.getElementById('security-modal');
+      const amberBox = document.getElementById('modal-amber-box');
+      const redBox = document.getElementById('modal-red-box');
+
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+
+      if (type === 'severe' || violations >= 3) {
+        amberBox.classList.add('hidden');
+        redBox.classList.remove('hidden');
+      } else {
+        amberBox.classList.remove('hidden');
+        redBox.classList.add('hidden');
+      }
+    }
+
+    function dismissWarning() {
+      const modal = document.getElementById('security-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    window.addEventListener('blur', () => {
+      triggerWarning('blur');
+    });
+
+    window.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && ['p', 's', 'c', 'u'].includes(e.key.toLowerCase())) {
+        e.preventDefault();
+        triggerWarning('blur');
+      }
+    });
+
+    let remainingSeconds = 88 * 60 + 44;
+    setInterval(() => {
+      if (remainingSeconds > 0) {
+        remainingSeconds--;
+        const hours = String(Math.floor(remainingSeconds / 3600)).padStart(2, '0');
+        const mins = String(Math.floor((remainingSeconds % 3600) / 60)).padStart(2, '0');
+        const secs = String(remainingSeconds % 60).padStart(2, '0');
+        document.getElementById('exam-timer').innerText = `${hours}:${mins}:${secs}`;
+      }
+    }, 1000);
+  </script>
+
+
+</body></html>

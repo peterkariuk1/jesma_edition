@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# ExamSecure runtime data & secrets
+.env
+server/data/

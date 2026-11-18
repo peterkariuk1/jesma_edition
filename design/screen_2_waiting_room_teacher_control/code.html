@@ -1,0 +1,645 @@
+<!DOCTYPE html><html lang="en" class="dark"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Waiting Room &amp; Teacher Control — CSOK JESMA</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script id="tailwind-config">/** @type {import('tailwindcss').Config} */
+globalThis.tailwind = globalThis.tailwind || {};
+globalThis.tailwind.config = {
+  darkMode: 'class',
+  theme: {
+    extend: {
+      colors: {
+        'accent': '#F07845',
+        'warning': '#F4B84A',
+        'error': '#E45D54',
+        'success': '#83B99A',
+        'outline': '#2A2624',
+        'outline-variant': '#383330',
+        'paper-bg': '#FAF8F5',
+        'paper-text': '#1E1C1A',
+        'paper-border': '#D5CDC5',
+        'paper-muted': '#524B43',
+        'paper-box': '#F2EDE8',
+        'warm-badge': '#2A1E18',
+        'editorial-cream': '#E8DCCB',
+        'light-primary': '#0B0A09',
+        'light-on-primary': '#F5F2EE',
+        'light-surface': '#151312',
+        'light-on-surface': '#F5F2EE',
+        'light-surface-container': '#191716',
+        'light-on-surface-variant': '#A7A09A',
+        'dark-primary': '#F07845',
+        'dark-on-primary': '#0B0A09',
+        'dark-surface': '#0B0A09',
+        'dark-on-surface': '#F5F2EE',
+        'dark-surface-container': '#191716',
+        'dark-on-surface-variant': '#A7A09A',
+      },
+      borderRadius: {
+        'sm': '6px',
+        'DEFAULT': '12px',
+        'md': '16px',
+        'lg': '24px',
+        'xl': '32px',
+        'full': '9999px',
+      },
+      spacing: {
+        'gutter-xs': '4px',
+        'gutter-sm': '8px',
+        'gutter-md': '16px',
+        'gutter-lg': '24px',
+        'gutter-xl': '32px',
+        'section': '48px',
+        'page-margin': '24px',
+      },
+      fontFamily: {
+        'display': ['"Playfair Display"', 'sans-serif'],
+        'headline': ['"Instrument Sans"', 'sans-serif'],
+        'title': ['"Instrument Sans"', 'sans-serif'],
+        'body': ['"Instrument Sans"', 'sans-serif'],
+        'label': ['"Instrument Sans"', 'sans-serif'],
+        'code': ['"Source Code Pro"', 'monospace'],
+      },
+      fontSize: {
+        'display-lg': ['56px', { lineHeight: '64px', letterSpacing: '-1px', fontWeight: '600' }],
+        'display-lg-mobile': ['32px', { lineHeight: '40px', letterSpacing: '-0.5px', fontWeight: '600' }],
+        'headline-xl': ['40px', { lineHeight: '48px', letterSpacing: '-0.5px', fontWeight: '600' }],
+        'headline-xl-mobile': ['28px', { lineHeight: '36px', letterSpacing: '-0.25px', fontWeight: '600' }],
+        'headline-lg': ['32px', { lineHeight: '40px', letterSpacing: '-0.5px', fontWeight: '600' }],
+        'headline-lg-mobile': ['24px', { lineHeight: '32px', letterSpacing: '-0.25px', fontWeight: '600' }],
+        'headline-md': ['24px', { lineHeight: '32px', letterSpacing: '0px', fontWeight: '600' }],
+        'title-lg': ['20px', { lineHeight: '28px', letterSpacing: '0px', fontWeight: '600' }],
+        'title-md': ['16px', { lineHeight: '24px', letterSpacing: '0px', fontWeight: '500' }],
+        'body-lg': ['18px', { lineHeight: '28px', letterSpacing: '0.15px', fontWeight: '400' }],
+        'body-md': ['15px', { lineHeight: '22px', letterSpacing: '0.25px', fontWeight: '400' }],
+        'body-sm': ['13px', { lineHeight: '18px', letterSpacing: '0.25px', fontWeight: '400' }],
+        'label-lg': ['14px', { lineHeight: '20px', letterSpacing: '0.5px', fontWeight: '600' }],
+        'label-sm': ['12px', { lineHeight: '16px', letterSpacing: '0.5px', fontWeight: '500' }],
+        'code-sm': ['12px', { lineHeight: '16px', letterSpacing: '0px', fontWeight: '500' }],
+      },
+      transitionDuration: {
+        'state-change': '150ms',
+        'surface-enter': '250ms',
+        'surface-exit': '150ms',
+      },
+      transitionDelay: {
+        'state-change': '0ms',
+        'surface-enter': '0ms',
+        'surface-exit': '0ms',
+      },
+      transitionTimingFunction: {
+        'state-change': 'cubic-bezier(0.4, 0, 0.2, 1)',
+        'surface-enter': 'cubic-bezier(0.16, 1, 0.3, 1)',
+        'surface-exit': 'cubic-bezier(0.4, 0, 1, 1)',
+      },
+    },
+  },
+};
+if (typeof module !== 'undefined') module.exports = globalThis.tailwind.config;
+</script>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&amp;family=Playfair+Display:ital,wght@0,600;1,600&amp;family=Source+Code+Pro:wght@400;500;600&amp;display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=block" rel="stylesheet">
+  <style>
+    .material-symbols-outlined, .material-symbols-rounded, .material-symbols-sharp, .material-icons {
+      display: inline-block; width: 1em; height: 1em; line-height: 1 !important; box-sizing: content-box; overflow: hidden; white-space: nowrap; direction: ltr; vertical-align: middle;
+    }
+  </style>
+</head>
+<body class="bg-dark-surface text-dark-on-surface font-body antialiased min-h-[1024px] selection:bg-accent selection:text-dark-surface flex flex-col justify-between relative overflow-x-hidden" data-stitch-vh="min-h-[1024px]===min-h-screen">
+
+  <!-- Ambient background glow -->
+  <div class="fixed inset-0 pointer-events-none z-0">
+    <div class="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[850px] h-[520px] rounded-full bg-accent/5 blur-[140px]"></div>
+    <div class="absolute top-0 right-1/4 w-[400px] h-[300px] rounded-full bg-[#3d2117]/25 blur-[120px]"></div>
+  </div>
+
+  <!-- Header Shell -->
+  <header class="relative z-10 w-full max-w-6xl mx-auto px-6 pt-8 pb-4 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <a href="../landing/Landing.html" class="w-8 h-8 rounded-full bg-dark-surface-container border border-outline flex items-center justify-center text-accent hover:border-accent transition-colors">
+        <span class="material-symbols-outlined text-[18px]">arrow_back</span>
+      </a>
+      <div class="flex items-baseline gap-2">
+        <span class="font-headline font-semibold text-title-md tracking-tight text-dark-on-surface">ExamSecure</span>
+        <span class="font-body text-label-sm text-dark-on-surface-variant font-medium">CSOK Jesma Edition</span>
+      </div>
+    </div>
+
+    <!-- Role switcher toggle for prototype demonstration -->
+    <div class="flex items-center gap-3 bg-dark-surface-container p-1 rounded-full border border-outline">
+      <button id="tab-pupil" type="button" onclick="switchExperience(&#39;pupil&#39;)" class="px-4 py-1.5 rounded-full font-label text-label-sm font-semibold transition-all duration-state-change bg-accent text-dark-surface shadow-sm">
+        Pupil Waiting Room
+      </button>
+      <button id="tab-teacher" type="button" onclick="switchExperience(&#39;teacher&#39;)" class="px-4 py-1.5 rounded-full font-label text-label-sm font-medium transition-all duration-state-change text-dark-on-surface-variant hover:text-dark-on-surface">
+        Teacher Control
+      </button>
+    </div>
+  </header>
+
+  <!-- ========================================================================= -->
+  <!-- 3.A PUPIL EXPERIENCE: EXAMINATION WAITING ROOM                            -->
+  <!-- ========================================================================= -->
+  <main id="pupil-view" class="relative z-10 flex-1 flex flex-col items-center justify-center px-6 py-12 max-w-3xl mx-auto w-full text-center">
+    
+    <!-- State pill bar (Interactive state test bar for demoing waiting room states) -->
+    <div class="mb-8 flex flex-wrap items-center justify-center gap-2 p-1.5 rounded-full bg-dark-surface-container/80 border border-outline font-label text-label-sm">
+      <span class="font-label text-label-sm text-dark-on-surface-variant px-2">Simulate State:</span>
+      <button type="button" onclick="setPupilState(&#39;waiting&#39;)" class="state-btn px-3 py-1 rounded-full font-label text-label-sm font-semibold bg-accent/20 text-accent border border-accent/40">Waiting</button>
+      <button type="button" onclick="setPupilState(&#39;opened&#39;)" class="state-btn px-3 py-1 rounded-full font-label text-label-sm text-dark-on-surface-variant hover:text-dark-on-surface">Teacher Opened</button>
+      <button type="button" onclick="setPupilState(&#39;closed&#39;)" class="state-btn px-3 py-1 rounded-full font-label text-label-sm text-dark-on-surface-variant hover:text-dark-on-surface">Access Denied</button>
+      <button type="button" onclick="setPupilState(&#39;ended&#39;)" class="state-btn px-3 py-1 rounded-full font-label text-label-sm text-dark-on-surface-variant hover:text-dark-on-surface">Exam Ended</button>
+      <button type="button" onclick="setPupilState(&#39;disconnected&#39;)" class="state-btn px-3 py-1 rounded-full font-label text-label-sm text-dark-on-surface-variant hover:text-dark-on-surface">Connection Lost</button>
+    </div>
+
+    <!-- Center Card / Waiting Station -->
+    <div class="w-full relative p-8 sm:p-12 rounded-2xl bg-dark-surface-container/60 border border-outline backdrop-blur-sm shadow-xl flex flex-col items-center">
+      
+      <!-- Animated Status Indicator -->
+      <div id="status-icon-container" class="relative mb-8 flex items-center justify-center">
+        <!-- Concentric ambient pulse rings -->
+        <div id="pulse-ring-1" class="absolute w-24 h-24 rounded-full bg-accent/10 animate-ping pointer-events-none"></div>
+        <div id="pulse-ring-2" class="absolute w-20 h-20 rounded-full bg-accent/15 blur-sm"></div>
+        <div id="status-badge" class="w-16 h-16 rounded-full bg-dark-surface-container border border-accent/40 flex items-center justify-center text-accent shadow-inner relative z-10">
+          <span id="status-material-icon" class="material-symbols-outlined text-[30px]">hourglass_top</span>
+        </div>
+      </div>
+
+      <!-- State Subtitle / Status Chip -->
+      <div class="flex items-center gap-2 mb-4">
+        <span id="state-chip" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-accent/15 border border-accent/30 text-accent font-label text-label-sm font-semibold">
+          <span class="w-2 h-2 rounded-full bg-accent animate-pulse"></span>
+          <span id="state-chip-text">Session Standby</span>
+        </span>
+        <span class="font-code text-code-sm text-dark-on-surface-variant tabular-nums">ROOM-JESMA-402</span>
+      </div>
+
+      <!-- Editorial Main Message (Sans + Italic Serif Accent) -->
+      <h1 id="pupil-main-heading" class="text-dark-on-surface tracking-tight mb-4">
+        <span class="block font-headline text-headline-xl text-balance font-semibold leading-tight text-light-on-primary">
+          You’re in.
+        </span>
+        <span class="block font-display italic text-display-lg sm:text-[54px] font-normal leading-tight text-editorial-cream mt-1">
+          Just waiting for your teacher.
+        </span>
+      </h1>
+
+      <!-- Supporting Guidance Text -->
+      <p id="pupil-supporting-text" class="font-body text-body-lg text-dark-on-surface-variant max-w-lg mx-auto mb-10 text-pretty">
+        The examination has not been opened yet. Stay on this page. Your examination paper will become available automatically when your teacher starts the session.
+      </p>
+
+      <!-- Auto-Transition Indicator & Device Telemetry -->
+      <div id="pupil-action-area" class="w-full max-w-md pt-6 border-t border-outline/60 flex flex-col items-center gap-4">
+        <div class="flex items-center gap-3 font-label text-label-sm text-dark-on-surface-variant">
+          <span class="w-2 h-2 rounded-full bg-success"></span>
+          <span>Live connection established</span>
+          <span class="text-dark-on-surface-variant">•</span>
+          <span class="material-symbols-outlined text-[15px] text-accent">lock</span>
+          <span>Encrypted stream</span>
+        </div>
+
+        <!-- Simulated automatic countdown / transition button -->
+        <a href="../pdf-viewer/PdfViewer.html" id="btn-auto-enter" class="hidden group items-center gap-3 pl-3 pr-7 py-2.5 rounded-full bg-light-surface-container border border-accent transition-all duration-state-change shadow-lg text-dark-on-surface">
+          <span class="w-8 h-8 rounded-full bg-accent flex items-center justify-center text-dark-surface font-bold group-hover:translate-x-0.5 transition-transform">
+            <span class="material-symbols-outlined text-[18px] text-light-primary">arrow_forward</span>
+          </span>
+          <span class="font-headline text-title-md font-semibold tracking-wide uppercase text-accent">
+            Enter Examination Viewer Now
+          </span>
+        </a>
+      </div>
+
+    </div>
+
+    <!-- Security advisory -->
+    <div class="mt-8 flex items-center gap-2 text-dark-on-surface-variant font-label text-label-sm">
+      <span class="material-symbols-outlined text-[16px] text-accent">info</span>
+      <span>Do not close or switch browser tabs. Focus monitoring activates automatically upon entry.</span>
+    </div>
+  </main>
+
+
+  <!-- ========================================================================= -->
+  <!-- 3.B TEACHER EXPERIENCE: AUTH KEY & DASHBOARD CONTROL                      -->
+  <!-- ========================================================================= -->
+  <main id="teacher-view" class="hidden relative z-10 flex-1 max-w-6xl mx-auto w-full px-6 py-8">
+    
+    <!-- State 1: Teacher Key Verification Modal/Form (When not authenticated) -->
+    <div id="teacher-auth-screen" class="max-w-md mx-auto py-16 flex flex-col items-center text-center">
+      <div class="w-14 h-14 rounded-full bg-dark-surface-container border border-outline flex items-center justify-center text-accent mb-6">
+        <span class="material-symbols-outlined text-[28px]">key</span>
+      </div>
+      
+      <h2 class="text-headline-xl font-headline font-semibold text-light-on-primary mb-2">Teacher Invigilator Key</h2>
+      <p class="font-body text-body-md text-dark-on-surface-variant mb-8 text-pretty">
+        Authenticate with your session key to access examination release schedules, device admissions, and invigilation controls.
+      </p>
+
+      <form onsubmit="handleTeacherAuth(event)" class="w-full flex flex-col gap-4">
+        <div class="relative">
+          <input id="teacher-key-input" type="password" placeholder="Enter Teacher Key ID (e.g. CSOK-KEY-2026)" value="CSOK-KEY-2026" class="w-full px-5 py-3.5 rounded-xl bg-dark-surface-container border border-outline focus:border-accent text-dark-on-surface placeholder:text-dark-on-surface-variant font-code text-code-sm text-center tracking-wider outline-none focus-visible:ring-2 focus-visible:ring-accent transition-colors">
+        </div>
+        
+        <!-- COMPONENT: button-primary -->
+        <button type="submit" class="group inline-flex items-center justify-center gap-3 pl-3 pr-6 py-2.5 rounded-full bg-dark-surface-container border border-outline hover:border-accent transition-all duration-state-change shadow-lg text-dark-on-surface cursor-pointer w-full">
+          <span class="w-8 h-8 rounded-full bg-accent flex items-center justify-center text-dark-surface font-bold group-hover:translate-x-0.5 transition-transform">
+            <span class="material-symbols-outlined text-[18px] text-light-primary">verified</span>
+          </span>
+          <span class="font-headline text-title-md tracking-wider font-semibold uppercase text-light-on-primary">
+            Continue / Access Controls
+          </span>
+        </button>
+      </form>
+      <span class="font-code text-code-sm text-dark-on-surface-variant mt-4">Demo prefilled key: CSOK-KEY-2026</span>
+    </div>
+
+    <!-- State 2: Teacher Dashboard (After key verified) -->
+    <div id="teacher-dashboard" class="hidden flex-col gap-8">
+      
+      <!-- Top Bar / Examination Status Header -->
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 p-6 rounded-2xl bg-dark-surface-container border border-outline">
+        <div>
+          <div class="flex items-center gap-3 mb-2">
+            <span id="exam-status-badge" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-accent/15 border border-accent/30 text-accent font-label text-label-sm font-semibold">
+              <span class="w-2 h-2 rounded-full bg-accent animate-pulse"></span>
+              <span id="exam-status-text">Status: Active &amp; Accepting</span>
+            </span>
+            <span class="font-code text-code-sm text-dark-on-surface-variant">CODE: JESMA-CSOK-P1</span>
+          </div>
+          <h2 class="text-headline-lg font-headline font-semibold text-light-on-primary">CSOK Jesma Edition 2026 — Session Invigilation</h2>
+          <p class="font-body text-body-md text-dark-on-surface-variant">Standard 90-Minute Secure PDF Paper. Preloaded and bundled.</p>
+        </div>
+
+        <!-- 3 Primary Actions Required by Spec -->
+        <div class="flex flex-wrap items-center gap-3">
+          <button id="btn-open-exam" type="button" onclick="teacherAction(&#39;open&#39;)" class="px-5 py-2.5 rounded-full bg-accent text-dark-surface font-headline font-semibold text-label-lg shadow-sm hover:brightness-110 transition-all flex items-center gap-2">
+            <span class="material-symbols-outlined text-[18px]">play_circle</span>
+            <span>OPEN EXAMINATION</span>
+          </button>
+
+          <button id="btn-close-access" type="button" onclick="teacherAction(&#39;close_access&#39;)" class="px-5 py-2.5 rounded-full bg-dark-surface border border-warning/50 text-warning hover:bg-warning/10 font-headline font-semibold text-label-lg transition-all flex items-center gap-2">
+            <span class="material-symbols-outlined text-[18px]">lock_clock</span>
+            <span>CLOSE NEW DEVICE ACCESS</span>
+          </button>
+
+          <button id="btn-end-exam" type="button" onclick="teacherAction(&#39;end&#39;)" class="px-5 py-2.5 rounded-full bg-dark-surface border border-error/50 text-error hover:bg-error/10 font-headline font-semibold text-label-lg transition-all flex items-center gap-2">
+            <span class="material-symbols-outlined text-[18px]">stop_circle</span>
+            <span>END EXAMINATION</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 2-Column Grid: Left Controls (Opening Window) / Right Devices Connected -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Left Column: Opening Configuration & Admission Rules (4 cols) -->
+        <div class="lg:col-span-4 flex flex-col gap-6">
+          <div class="p-6 rounded-2xl bg-dark-surface-container border border-outline">
+            <h3 class="text-title-lg font-headline font-semibold text-light-on-primary mb-4 flex items-center gap-2">
+              <span class="material-symbols-outlined text-accent text-[20px]">tune</span>
+              Opening Configuration
+            </h3>
+            
+            <div class="space-y-4">
+              <div>
+                <label class="block font-label text-label-sm text-dark-on-surface-variant mb-1.5 font-medium">Session Opening Mode</label>
+                <div class="grid grid-cols-2 gap-2">
+                  <button type="button" class="px-3 py-2 rounded-lg bg-dark-surface border border-accent text-accent font-label text-label-sm font-semibold text-center">
+                    Immediate Open
+                  </button>
+                  <button type="button" class="px-3 py-2 rounded-lg bg-dark-surface border border-outline text-dark-on-surface-variant font-label text-label-sm text-center hover:border-outline-variant">
+                    Scheduled Time
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label class="block font-label text-label-sm text-dark-on-surface-variant mb-1.5 font-medium">New Device Admission Window</label>
+                <div class="flex items-center gap-2">
+                  <select class="w-full px-3 py-2 rounded-lg bg-dark-surface border border-outline text-dark-on-surface font-label text-label-sm focus:border-accent outline-none focus-visible:ring-2 focus-visible:ring-accent">
+                    <option selected>15 minutes after open</option>
+                    <option>10 minutes after open</option>
+                    <option>5 minutes after open</option>
+                    <option>Strict (Immediate lock)</option>
+                  </select>
+                </div>
+                <p class="font-body text-body-sm text-dark-on-surface-variant mt-1.5">
+                  After window closes, existing pupils remain in paper. New device connections are denied.
+                </p>
+              </div>
+
+              <div>
+                <label class="block font-label text-label-sm text-dark-on-surface-variant mb-1.5 font-medium">Session Duration Limit</label>
+                <div class="flex items-center justify-between p-3 rounded-lg bg-dark-surface border border-outline">
+                  <span class="text-dark-on-surface font-code text-code-sm font-medium">90 Minutes</span>
+                  <span class="font-label text-label-sm text-dark-on-surface-variant">Auto-closes at 11:30 AM</span>
+                </div>
+              </div>
+
+              <div class="p-3.5 rounded-lg bg-warm-badge border border-accent/20 font-body text-body-sm text-accent">
+                <span class="font-semibold block mb-0.5">Invigilation Policy Active:</span>
+                Application switching detection and browser unfocus alerts are enforced on connected devices.
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Metrics -->
+          <div class="grid grid-cols-2 gap-4">
+            <div class="p-5 rounded-2xl bg-dark-surface-container border border-outline">
+              <span class="font-label text-label-sm text-dark-on-surface-variant uppercase tracking-wider font-semibold">Active Pupils</span>
+              <div class="text-headline-xl font-bold font-headline text-light-on-primary mt-1 tabular-nums" id="metric-connected">28</div>
+              <span class="font-label text-label-sm text-success flex items-center gap-1 mt-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-success"></span> All stable
+              </span>
+            </div>
+            <div class="p-5 rounded-2xl bg-dark-surface-container border border-outline">
+              <span class="font-label text-label-sm text-dark-on-surface-variant uppercase tracking-wider font-semibold">Flagged Alerts</span>
+              <div class="text-headline-xl font-bold font-headline text-warning mt-1 tabular-nums" id="metric-alerts">1</div>
+              <span class="font-body text-body-sm text-dark-on-surface-variant mt-1 block">Window unfocus</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column: Connected Devices Table (8 cols) -->
+        <div class="lg:col-span-8 flex flex-col">
+          <div class="p-6 rounded-2xl bg-dark-surface-container border border-outline flex-1 flex flex-col">
+            <div class="flex items-center justify-between mb-4">
+              <div>
+                <h3 class="text-title-lg font-headline font-semibold text-light-on-primary flex items-center gap-2">
+                  <span class="material-symbols-outlined text-accent text-[20px]">devices</span>
+                  Connected Pupil Devices
+                </h3>
+                <p class="font-body text-body-sm text-dark-on-surface-variant">Real-time device registry. No pupil names or accounts required.</p>
+              </div>
+              <span class="font-code text-code-sm px-2.5 py-1 rounded-full bg-dark-surface border border-outline text-dark-on-surface-variant tabular-nums">
+                28 Total Joined
+              </span>
+            </div>
+
+            <!-- Device List Table -->
+            <div class="overflow-x-auto -mx-6 px-6">
+              <table class="w-full text-left border-collapse">
+                <thead>
+                  <tr class="border-b border-outline/60 font-label text-label-sm text-dark-on-surface-variant uppercase tracking-wider">
+                    <th class="py-3 font-medium">Device Identifier</th>
+                    <th class="py-3 font-medium">Connection</th>
+                    <th class="py-3 font-medium">Time Joined</th>
+                    <th class="py-3 font-medium">Security Telemetry</th>
+                    <th class="py-3 font-medium text-right">Device Control</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-outline/40 font-label text-label-sm font-normal">
+                  <tr class="hover:bg-dark-surface/50 transition-colors">
+                    <td class="py-3.5 font-code text-code-sm text-light-on-primary flex items-center gap-2">
+                      <span class="material-symbols-outlined text-[16px] text-dark-on-surface-variant">laptop_mac</span>
+                      STATION-LAPTOP-01
+                    </td>
+                    <td class="py-3.5">
+                      <span class="inline-flex items-center gap-1.5 font-label text-label-sm text-success">
+                        <span class="w-1.5 h-1.5 rounded-full bg-success"></span> Connected
+                      </span>
+                    </td>
+                    <td class="py-3.5 text-dark-on-surface-variant font-code text-code-sm tabular-nums">10:02:14 AM</td>
+                    <td class="py-3.5">
+                      <span class="px-2 py-0.5 rounded-full bg-success/10 border border-success/30 text-success font-label text-label-sm">
+                        Clean • 0 Violations
+                      </span>
+                    </td>
+                    <td class="py-3.5 text-right">
+                      <button type="button" class="font-label text-label-sm text-dark-on-surface-variant hover:text-error transition-colors">Disconnect</button>
+                    </td>
+                  </tr>
+
+                  <tr class="hover:bg-dark-surface/50 transition-colors">
+                    <td class="py-3.5 font-code text-code-sm text-light-on-primary flex items-center gap-2">
+                      <span class="material-symbols-outlined text-[16px] text-dark-on-surface-variant">tablet</span>
+                      STATION-TABLET-07
+                    </td>
+                    <td class="py-3.5">
+                      <span class="inline-flex items-center gap-1.5 font-label text-label-sm text-success">
+                        <span class="w-1.5 h-1.5 rounded-full bg-success"></span> Connected
+                      </span>
+                    </td>
+                    <td class="py-3.5 text-dark-on-surface-variant font-code text-code-sm tabular-nums">10:03:40 AM</td>
+                    <td class="py-3.5">
+                      <span class="px-2 py-0.5 rounded-full bg-warning/10 border border-warning/30 text-warning font-label text-label-sm">
+                        1 Blur Violation Recorded
+                      </span>
+                    </td>
+                    <td class="py-3.5 text-right">
+                      <button type="button" class="font-label text-label-sm text-dark-on-surface-variant hover:text-error transition-colors">Disconnect</button>
+                    </td>
+                  </tr>
+
+                  <tr class="hover:bg-dark-surface/50 transition-colors">
+                    <td class="py-3.5 font-code text-code-sm text-light-on-primary flex items-center gap-2">
+                      <span class="material-symbols-outlined text-[16px] text-dark-on-surface-variant">desktop_windows</span>
+                      STATION-DESK-12
+                    </td>
+                    <td class="py-3.5">
+                      <span class="inline-flex items-center gap-1.5 font-label text-label-sm text-success">
+                        <span class="w-1.5 h-1.5 rounded-full bg-success"></span> Connected
+                      </span>
+                    </td>
+                    <td class="py-3.5 text-dark-on-surface-variant font-code text-code-sm tabular-nums">10:04:02 AM</td>
+                    <td class="py-3.5">
+                      <span class="px-2 py-0.5 rounded-full bg-success/10 border border-success/30 text-success font-label text-label-sm">
+                        Clean • 0 Violations
+                      </span>
+                    </td>
+                    <td class="py-3.5 text-right">
+                      <button type="button" class="font-label text-label-sm text-dark-on-surface-variant hover:text-error transition-colors">Disconnect</button>
+                    </td>
+                  </tr>
+
+                  <tr class="hover:bg-dark-surface/50 transition-colors">
+                    <td class="py-3.5 font-code text-code-sm text-light-on-primary flex items-center gap-2">
+                      <span class="material-symbols-outlined text-[16px] text-dark-on-surface-variant">laptop_chromebook</span>
+                      STATION-CHROME-04
+                    </td>
+                    <td class="py-3.5">
+                      <span class="inline-flex items-center gap-1.5 font-label text-label-sm text-success">
+                        <span class="w-1.5 h-1.5 rounded-full bg-success"></span> Connected
+                      </span>
+                    </td>
+                    <td class="py-3.5 text-dark-on-surface-variant font-code text-code-sm tabular-nums">10:05:18 AM</td>
+                    <td class="py-3.5">
+                      <span class="px-2 py-0.5 rounded-full bg-success/10 border border-success/30 text-success font-label text-label-sm">
+                        Clean • 0 Violations
+                      </span>
+                    </td>
+                    <td class="py-3.5 text-right">
+                      <button type="button" class="font-label text-label-sm text-dark-on-surface-variant hover:text-error transition-colors">Disconnect</button>
+                    </td>
+                  </tr>
+
+                  <tr class="hover:bg-dark-surface/50 transition-colors">
+                    <td class="py-3.5 font-code text-code-sm text-light-on-primary flex items-center gap-2">
+                      <span class="material-symbols-outlined text-[16px] text-dark-on-surface-variant">desktop_windows</span>
+                      STATION-DESK-19
+                    </td>
+                    <td class="py-3.5">
+                      <span class="inline-flex items-center gap-1.5 font-label text-label-sm text-success">
+                        <span class="w-1.5 h-1.5 rounded-full bg-success"></span> Connected
+                      </span>
+                    </td>
+                    <td class="py-3.5 text-dark-on-surface-variant font-code text-code-sm tabular-nums">10:06:55 AM</td>
+                    <td class="py-3.5">
+                      <span class="px-2 py-0.5 rounded-full bg-success/10 border border-success/30 text-success font-label text-label-sm">
+                        Clean • 0 Violations
+                      </span>
+                    </td>
+                    <td class="py-3.5 text-right">
+                      <button type="button" class="font-label text-label-sm text-dark-on-surface-variant hover:text-error transition-colors">Disconnect</button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Footer summary -->
+            <div class="mt-auto pt-4 flex items-center justify-between font-label text-label-sm text-dark-on-surface-variant border-t border-outline/40">
+              <span>Showing 5 of 28 connected stations</span>
+              <span class="text-accent font-medium">Auto-refreshing via local socket</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="relative z-10 w-full max-w-6xl mx-auto px-6 py-6 border-t border-outline/40 flex flex-col sm:flex-row items-center justify-between text-dark-on-surface-variant font-label text-label-sm gap-4">
+    <div class="flex items-center gap-2">
+      <span class="w-1.5 h-1.5 rounded-full bg-accent"></span>
+      <span>CSOK Jesma Edition • Waiting &amp; Invigilation Control Hub</span>
+    </div>
+    <div class="flex items-center gap-4 font-code text-code-sm">
+      <span>SERVER: LOCAL-NODE-01</span>
+      <span>PORT: 8080-SEC</span>
+    </div>
+  </footer>
+
+  <!-- Interactive Logic for Prototype Demonstration -->
+  <script>
+    function switchExperience(role) {
+      const pupilTab = document.getElementById('tab-pupil');
+      const teacherTab = document.getElementById('tab-teacher');
+      const pupilView = document.getElementById('pupil-view');
+      const teacherView = document.getElementById('teacher-view');
+
+      if (role === 'teacher') {
+        pupilTab.className = "px-4 py-1.5 rounded-full font-label text-label-sm font-medium transition-all duration-state-change text-dark-on-surface-variant hover:text-dark-on-surface";
+        teacherTab.className = "px-4 py-1.5 rounded-full font-label text-label-sm font-semibold transition-all duration-state-change bg-accent text-dark-surface shadow-sm";
+        pupilView.classList.add('hidden');
+        teacherView.classList.remove('hidden');
+      } else {
+        pupilTab.className = "px-4 py-1.5 rounded-full font-label text-label-sm font-semibold transition-all duration-state-change bg-accent text-dark-surface shadow-sm";
+        teacherTab.className = "px-4 py-1.5 rounded-full font-label text-label-sm font-medium transition-all duration-state-change text-dark-on-surface-variant hover:text-dark-on-surface";
+        pupilView.classList.remove('hidden');
+        teacherView.classList.add('hidden');
+      }
+    }
+
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('view') === 'teacher') {
+        switchExperience('teacher');
+      }
+    } catch(e) {}
+
+    function handleTeacherAuth(e) {
+      e.preventDefault();
+      document.getElementById('teacher-auth-screen').classList.add('hidden');
+      document.getElementById('teacher-dashboard').classList.remove('hidden');
+      document.getElementById('teacher-dashboard').classList.add('flex');
+    }
+
+    function teacherAction(action) {
+      const statusBadge = document.getElementById('exam-status-badge');
+      const statusText = document.getElementById('exam-status-text');
+
+      if (action === 'open') {
+        statusBadge.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-success/15 border border-success/30 text-success font-label text-label-sm font-semibold";
+        statusText.innerText = "Status: Examination Open & Paper Released";
+      } else if (action === 'close_access') {
+        statusBadge.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-warning/15 border border-warning/30 text-warning font-label text-label-sm font-semibold";
+        statusText.innerText = "Status: New Device Admission Closed";
+      } else if (action === 'end') {
+        statusBadge.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-error/15 border border-error/30 text-error font-label text-label-sm font-semibold";
+        statusText.innerText = "Status: Examination Concluded";
+      }
+    }
+
+    function setPupilState(state) {
+      const heading = document.getElementById('pupil-main-heading');
+      const text = document.getElementById('pupil-supporting-text');
+      const chip = document.getElementById('state-chip');
+      const chipText = document.getElementById('state-chip-text');
+      const badge = document.getElementById('status-badge');
+      const icon = document.getElementById('status-material-icon');
+      const autoBtn = document.getElementById('btn-auto-enter');
+      const ring1 = document.getElementById('pulse-ring-1');
+
+      if (state === 'waiting') {
+        chip.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-accent/15 border border-accent/30 text-accent font-label text-label-sm font-semibold";
+        chipText.innerText = "Session Standby";
+        icon.innerText = "hourglass_top";
+        badge.className = "w-16 h-16 rounded-full bg-dark-surface-container border border-accent/40 flex items-center justify-center text-accent shadow-inner relative z-10";
+        heading.innerHTML = `<span class="block font-headline text-headline-xl text-balance font-semibold leading-tight text-light-on-primary">You’re in.</span><span class="block font-display italic text-display-lg sm:text-[54px] font-normal leading-tight text-editorial-cream mt-1">Just waiting for your teacher.</span>`;
+        text.innerText = "The examination has not been opened yet. Stay on this page. Your examination paper will become available automatically when your teacher starts the session.";
+        autoBtn.classList.add('hidden');
+        autoBtn.classList.remove('inline-flex');
+        ring1.style.display = 'block';
+      } else if (state === 'opened') {
+        chip.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-success/15 border border-success/30 text-success font-label text-label-sm font-semibold";
+        chipText.innerText = "Teacher Opened Session";
+        icon.innerText = "lock_open_right";
+        badge.className = "w-16 h-16 rounded-full bg-[#142318] border border-success/40 flex items-center justify-center text-success shadow-inner relative z-10";
+        heading.innerHTML = `<span class="block font-headline text-headline-xl text-balance font-semibold leading-tight text-light-on-primary">Paper Released.</span><span class="block font-display italic text-display-lg sm:text-[54px] font-normal leading-tight text-success mt-1">Entering viewer now...</span>`;
+        text.innerText = "Your teacher has authorized paper distribution. Launching secure PDF viewer...";
+        autoBtn.classList.remove('hidden');
+        autoBtn.classList.add('inline-flex');
+        ring1.style.display = 'none';
+        setTimeout(() => {
+          window.location.href = "../pdf-viewer/PdfViewer.html";
+        }, 1800);
+      } else if (state === 'closed') {
+        chip.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-warning/15 border border-warning/30 text-warning font-label text-label-sm font-semibold";
+        chipText.innerText = "Admission Closed";
+        icon.innerText = "block";
+        badge.className = "w-16 h-16 rounded-full bg-[#261E16] border border-warning/40 flex items-center justify-center text-warning shadow-inner relative z-10";
+        heading.innerHTML = `<span class="block font-headline text-headline-xl text-balance font-semibold leading-tight text-light-on-primary">Access Denied.</span><span class="block font-display italic text-display-lg sm:text-[54px] font-normal leading-tight text-warning mt-1">Device admission window closed.</span>`;
+        text.innerText = "The invigilator has closed access for new devices. If you believe this is an error, please raise your hand in the examination room.";
+        autoBtn.classList.add('hidden');
+        autoBtn.classList.remove('inline-flex');
+        ring1.style.display = 'none';
+      } else if (state === 'ended') {
+        chip.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-error/15 border border-error/30 text-error font-label text-label-sm font-semibold";
+        chipText.innerText = "Session Concluded";
+        icon.innerText = "done_all";
+        badge.className = "w-16 h-16 rounded-full bg-[#261616] border border-error/40 flex items-center justify-center text-error shadow-inner relative z-10";
+        heading.innerHTML = `<span class="block font-headline text-headline-xl text-balance font-semibold leading-tight text-light-on-primary">Examination Ended.</span><span class="block font-display italic text-display-lg sm:text-[54px] font-normal leading-tight text-editorial-cream mt-1">All papers collected.</span>`;
+        text.innerText = "The teacher has concluded this examination sitting. Your answer booklet will be collected by the room proctor.";
+        autoBtn.classList.add('hidden');
+        autoBtn.classList.remove('inline-flex');
+        ring1.style.display = 'none';
+      } else if (state === 'disconnected') {
+        chip.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-error/15 border border-error/30 text-error font-label text-label-sm font-semibold";
+        chipText.innerText = "Connection Lost";
+        icon.innerText = "wifi_off";
+        badge.className = "w-16 h-16 rounded-full bg-[#261616] border border-error/40 flex items-center justify-center text-error shadow-inner relative z-10";
+        heading.innerHTML = `<span class="block font-headline text-headline-xl text-balance font-semibold leading-tight text-light-on-primary">Network Interrupted.</span><span class="block font-display italic text-display-lg sm:text-[54px] font-normal leading-tight text-error mt-1">Reconnecting to proctor...</span>`;
+        text.innerText = "Attempting to re-establish secure connection with local proctor station. Please remain seated.";
+        autoBtn.classList.add('hidden');
+        autoBtn.classList.remove('inline-flex');
+        ring1.style.display = 'none';
+      }
+    }
+  </script>
+
+
+</body></html>

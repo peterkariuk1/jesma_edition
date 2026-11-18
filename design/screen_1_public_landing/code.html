@@ -1,0 +1,209 @@
+<!DOCTYPE html><html lang="en" class="dark"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CSOK JESMA EDITION — Secure Examination</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script id="tailwind-config">/** @type {import('tailwindcss').Config} */
+globalThis.tailwind = globalThis.tailwind || {};
+globalThis.tailwind.config = {
+  darkMode: 'class',
+  theme: {
+    extend: {
+      colors: {
+        'accent': '#F07845',
+        'warning': '#F4B84A',
+        'error': '#E45D54',
+        'success': '#83B99A',
+        'outline': '#2A2624',
+        'outline-variant': '#383330',
+        'paper-bg': '#FAF8F5',
+        'paper-text': '#1E1C1A',
+        'paper-border': '#D5CDC5',
+        'paper-muted': '#524B43',
+        'paper-box': '#F2EDE8',
+        'warm-badge': '#2A1E18',
+        'editorial-cream': '#E8DCCB',
+        'light-primary': '#0B0A09',
+        'light-on-primary': '#F5F2EE',
+        'light-surface': '#151312',
+        'light-on-surface': '#F5F2EE',
+        'light-surface-container': '#191716',
+        'light-on-surface-variant': '#A7A09A',
+        'dark-primary': '#F07845',
+        'dark-on-primary': '#0B0A09',
+        'dark-surface': '#0B0A09',
+        'dark-on-surface': '#F5F2EE',
+        'dark-surface-container': '#191716',
+        'dark-on-surface-variant': '#A7A09A',
+      },
+      borderRadius: {
+        'sm': '6px',
+        'DEFAULT': '12px',
+        'md': '16px',
+        'lg': '24px',
+        'xl': '32px',
+        'full': '9999px',
+      },
+      spacing: {
+        'gutter-xs': '4px',
+        'gutter-sm': '8px',
+        'gutter-md': '16px',
+        'gutter-lg': '24px',
+        'gutter-xl': '32px',
+        'section': '48px',
+        'page-margin': '24px',
+      },
+      fontFamily: {
+        'display': ['"Playfair Display"', 'sans-serif'],
+        'headline': ['"Instrument Sans"', 'sans-serif'],
+        'title': ['"Instrument Sans"', 'sans-serif'],
+        'body': ['"Instrument Sans"', 'sans-serif'],
+        'label': ['"Instrument Sans"', 'sans-serif'],
+        'code': ['"Source Code Pro"', 'monospace'],
+      },
+      fontSize: {
+        'display-lg': ['56px', { lineHeight: '64px', letterSpacing: '-1px', fontWeight: '600' }],
+        'display-lg-mobile': ['32px', { lineHeight: '40px', letterSpacing: '-0.5px', fontWeight: '600' }],
+        'headline-xl': ['40px', { lineHeight: '48px', letterSpacing: '-0.5px', fontWeight: '600' }],
+        'headline-xl-mobile': ['28px', { lineHeight: '36px', letterSpacing: '-0.25px', fontWeight: '600' }],
+        'headline-lg': ['32px', { lineHeight: '40px', letterSpacing: '-0.5px', fontWeight: '600' }],
+        'headline-lg-mobile': ['24px', { lineHeight: '32px', letterSpacing: '-0.25px', fontWeight: '600' }],
+        'headline-md': ['24px', { lineHeight: '32px', letterSpacing: '0px', fontWeight: '600' }],
+        'title-lg': ['20px', { lineHeight: '28px', letterSpacing: '0px', fontWeight: '600' }],
+        'title-md': ['16px', { lineHeight: '24px', letterSpacing: '0px', fontWeight: '500' }],
+        'body-lg': ['18px', { lineHeight: '28px', letterSpacing: '0.15px', fontWeight: '400' }],
+        'body-md': ['15px', { lineHeight: '22px', letterSpacing: '0.25px', fontWeight: '400' }],
+        'body-sm': ['13px', { lineHeight: '18px', letterSpacing: '0.25px', fontWeight: '400' }],
+        'label-lg': ['14px', { lineHeight: '20px', letterSpacing: '0.5px', fontWeight: '600' }],
+        'label-sm': ['12px', { lineHeight: '16px', letterSpacing: '0.5px', fontWeight: '500' }],
+        'code-sm': ['12px', { lineHeight: '16px', letterSpacing: '0px', fontWeight: '500' }],
+      },
+      transitionDuration: {
+        'state-change': '150ms',
+        'surface-enter': '250ms',
+        'surface-exit': '150ms',
+      },
+      transitionDelay: {
+        'state-change': '0ms',
+        'surface-enter': '0ms',
+        'surface-exit': '0ms',
+      },
+      transitionTimingFunction: {
+        'state-change': 'cubic-bezier(0.4, 0, 0.2, 1)',
+        'surface-enter': 'cubic-bezier(0.16, 1, 0.3, 1)',
+        'surface-exit': 'cubic-bezier(0.4, 0, 1, 1)',
+      },
+    },
+  },
+};
+if (typeof module !== 'undefined') module.exports = globalThis.tailwind.config;
+</script>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&amp;family=Playfair+Display:ital,wght@0,600;1,600&amp;family=Source+Code+Pro:wght@400;500;600&amp;display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=block" rel="stylesheet">
+  <style>
+    .material-symbols-outlined, .material-symbols-rounded, .material-symbols-sharp, .material-icons {
+      display: inline-block; width: 1em; height: 1em; line-height: 1 !important; box-sizing: content-box; overflow: hidden; white-space: nowrap; direction: ltr; vertical-align: middle;
+    }
+  </style>
+</head>
+<body class="bg-dark-surface text-dark-on-surface font-body antialiased min-h-[1024px] selection:bg-accent selection:text-dark-surface flex flex-col justify-between relative overflow-x-hidden" data-stitch-vh="min-h-[1024px]===min-h-screen">
+
+  <!-- Background Warm Radial Gradient Atmosphere (Referencing inspiration image) -->
+  <div class="fixed inset-0 pointer-events-none z-0">
+    <div class="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[780px] h-[480px] rounded-full bg-accent/5 blur-[120px]"></div>
+    <div class="absolute -top-32 right-1/4 w-[420px] h-[340px] rounded-full bg-[#3d2117]/30 blur-[100px]"></div>
+    <div class="absolute bottom-0 left-1/2 -translate-x-1/2 w-full h-[320px] bg-gradient-to-t from-light-surface/60 to-transparent"></div>
+  </div>
+
+  <!-- Top Minimal Navigation -->
+  <header class="relative z-10 w-full max-w-6xl mx-auto px-6 pt-8 pb-4 flex items-center justify-between">
+    <!-- Brand / Logo -->
+    <div class="flex items-center gap-3">
+      <div class="w-8 h-8 rounded-full bg-dark-surface-container border border-outline flex items-center justify-center text-accent">
+        <span class="material-symbols-outlined text-[18px]">verified_user</span>
+      </div>
+      <div class="flex items-baseline gap-2">
+        <span class="font-headline font-semibold text-title-md tracking-tight text-dark-on-surface">ExamSecure</span>
+        <span class="font-body text-label-sm text-dark-on-surface-variant font-medium">CSOK Edition</span>
+      </div>
+    </div>
+
+    <!-- Security Indicator & Teacher Access Trigger -->
+    <div class="flex items-center gap-4">
+      <div class="hidden sm:flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-dark-surface-container/60 border border-outline font-label text-label-sm text-dark-on-surface-variant">
+        <span class="w-2 h-2 rounded-full bg-success"></span>
+        <span data-design-text-token="label-sm">Club Session Active</span>
+      </div>
+      <a href="../waiting-room/WaitingRoom.html?view=teacher" class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-dark-surface-container/80 border border-outline hover:border-outline-variant hover:text-dark-on-surface font-label text-label-sm text-dark-on-surface-variant transition-colors">
+        <span class="material-symbols-outlined text-[16px]">key</span>
+        <span>Teacher Access</span>
+      </a>
+    </div>
+  </header>
+
+  <!-- Main Hero Viewport -->
+  <main class="relative z-10 flex-1 flex flex-col items-center justify-center px-6 py-12 text-center max-w-4xl mx-auto w-full">
+    
+    <!-- Editorial Framing Box mimicking the reference layout's hero focal points -->
+    <div class="w-full relative py-8 px-4 sm:px-12 flex flex-col items-center">
+      
+      <!-- Minimal Editorial Badges (inspired by 'Agency' & 'Innovative' tags from reference) -->
+      
+
+      <!-- Main Headline: Editorial Sans + Italic Serif Accent -->
+      <h1 class="text-dark-on-surface mb-6 tracking-tight">
+        <span class="block font-headline text-headline-xl sm:text-display-lg text-balance font-semibold leading-tight text-light-on-primary">
+          CSOK JESMA EDITION.
+        </span>
+        <span class="block font-display italic text-display-lg sm:text-[68px] font-normal leading-tight text-editorial-cream mt-1">
+          Are you ready?
+        </span>
+      </h1>
+
+      <!-- Supporting Guidance Copy -->
+      <p class="font-body text-body-lg text-dark-on-surface-variant max-w-xl mx-auto mb-10 text-pretty">
+        Welcome to your examination environment. Enter when your teacher opens the session.
+      </p>
+
+      <!-- Primary Action CTA (Reference's signature pill button with warm orange arrow circle) -->
+      <div class="flex flex-col items-center gap-4">
+        <!-- COMPONENT: button-primary -->
+        <a href="../waiting-room/WaitingRoom.html?view=pupil" id="btn-start-exam" data-component-id="button-primary" data-component-type="button" data-component-variant="primary" class="group inline-flex items-center gap-3 pl-3 pr-7 py-2.5 rounded-full bg-dark-surface-container/90 border border-outline hover:border-accent/70 transition-all duration-state-change shadow-lg hover:shadow-accent/5 text-dark-on-surface cursor-pointer">
+          <span class="w-9 h-9 rounded-full bg-accent flex items-center justify-center text-dark-surface font-bold transition-transform duration-state-change group-hover:translate-x-1 shadow-sm">
+            <span class="material-symbols-outlined text-[20px] text-light-primary">arrow_forward</span>
+          </span>
+          <span data-design-text-token="label-lg" class="font-headline text-title-md tracking-wider font-semibold uppercase text-light-on-primary">
+            Start Exam
+          </span>
+        </a>
+
+        <!-- Security lock indicator below button -->
+        <div class="flex items-center gap-1.5 text-dark-on-surface-variant font-label text-label-sm pt-2">
+          <span class="material-symbols-outlined text-[16px] text-accent">lock</span>
+          <span data-design-text-token="label-sm">Secure examination environment</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Editorial Feature Pillars (Echoing reference's bottom category cards: minimalist, focused on exam integrity) -->
+    
+
+  </main>
+
+  <!-- Footer Notice -->
+  <footer class="relative z-10 w-full max-w-6xl mx-auto px-6 py-6 border-t border-outline/40 flex flex-col sm:flex-row items-center justify-between text-dark-on-surface-variant font-label text-label-sm gap-4">
+    <div class="flex items-center gap-2">
+      <span class="w-1.5 h-1.5 rounded-full bg-accent"></span>
+      <span>CSOK Examination Board • Jesma Academic Evaluation Series</span>
+    </div>
+    <div class="flex items-center gap-4 font-code text-code-sm">
+      <span>Station ID: <code class="text-dark-on-surface tabular-nums">PUPIL-NODE-784</code></span>
+      <span>•</span>
+      <span>Encrypted Local Channel</span>
+    </div>
+  </footer>
+
+
+
+</body></html>
