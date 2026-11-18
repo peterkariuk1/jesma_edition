@@ -10,11 +10,10 @@ import {
   MdTimer,
   MdVisibilityOff,
   MdWarningAmber,
-  MdWifiOff,
   MdZoomIn,
   MdZoomOut,
 } from 'react-icons/md'
-import { BrandMark, Modal, ModalButton, Spinner } from '../components/ui.tsx'
+import { BrandMark, Modal, ModalButton } from '../components/ui.tsx'
 import { cx, formatCountdown } from '../lib/format.ts'
 import { useNow } from '../lib/useNow.ts'
 import { COUNTED_EVENTS, type SecurityEventType } from '../shared/types.ts'
@@ -23,9 +22,11 @@ import { useExamSecurity } from './useExamSecurity.ts'
 import type { PupilSession } from './usePupilSession.ts'
 
 const ZOOM_STEPS = [0.6, 0.75, 0.9, 1, 1.15, 1.3, 1.5, 1.75, 2, 2.5]
+/** iPhone Safari has no element full-screen API, so the button is hidden there. */
+const CAN_FULLSCREEN = typeof document !== 'undefined' && Boolean(document.fullscreenEnabled)
 
 export function ExamViewer({ session }: { session: PupilSession }) {
-  const { state, token, connected, reportEvent, clockOffset } = session
+  const { state, deviceId, reportEvent } = session
   const scrollRef = useRef<HTMLDivElement>(null)
   const [numPages, setNumPages] = useState(0)
   const [currentPage, setCurrentPage] = useState(1)
@@ -49,7 +50,7 @@ export function ExamViewer({ session }: { session: PupilSession }) {
   // ---- timer --------------------------------------------------------------------------
   const endsAt = state?.exam.endsAt ?? null
   const now = useNow(1000, endsAt !== null)
-  const remaining = endsAt !== null ? endsAt - (now + clockOffset) : null
+  const remaining = endsAt !== null ? endsAt - now : null
 
   // ---- page tracking ------------------------------------------------------------------
   const onScroll = useCallback(() => {
@@ -88,15 +89,15 @@ export function ExamViewer({ session }: { session: PupilSession }) {
     else void document.documentElement.requestFullscreen?.().catch(() => {})
   }
 
-  const hidePaper = security.away || !connected
+  const hidePaper = security.away
   const timeLow = remaining !== null && remaining <= 5 * 60_000
 
-  if (!token || !state?.device) return null
+  if (!deviceId || !state?.device) return null
 
   return (
     <div className="exam-locked flex h-dvh flex-col overflow-hidden bg-ink" onContextMenu={(e) => e.preventDefault()}>
       {/* ------------------------------------------------------------------ top bar */}
-      <header className="relative z-30 flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-outline bg-surface px-4 py-3 shadow-md sm:px-6">
+      <header className="relative z-30 flex shrink-0 flex-wrap items-center justify-between gap-x-3 gap-y-2.5 border-b border-outline bg-surface px-3 pb-2.5 pt-[max(0.625rem,env(safe-area-inset-top))] shadow-md sm:px-6 sm:py-3">
         <div className="flex min-w-0 items-center gap-4">
           <div className="flex items-center gap-2.5">
             <BrandMark size="sm" />
@@ -106,20 +107,16 @@ export function ExamViewer({ session }: { session: PupilSession }) {
           <span className="hidden max-w-[28ch] truncate text-label-sm font-semibold text-on-surface lg:inline" title={state.exam.title}>
             {state.exam.title}
           </span>
-          <span
-            className={cx(
-              'flex items-center gap-1.5 rounded-full border px-3 py-1 text-label-sm font-medium',
-              connected ? 'border-success/30 bg-success/10 text-success' : 'border-error/30 bg-error/10 text-error',
-            )}
-          >
-            <span className={cx('h-1.5 w-1.5 rounded-full animate-pulse', connected ? 'bg-success' : 'bg-error')} />
-            <span className="hidden sm:inline">{connected ? 'Secure session' : 'Reconnecting'}</span>
-            <span className="sm:hidden">{connected ? 'Secure' : 'Offline'}</span>
+          <span className="flex items-center gap-1.5 rounded-full border border-success/30 bg-success/10 px-3 py-1 text-label-sm font-medium text-success">
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-success" />
+            <span className="hidden sm:inline">Secure session</span>
+            <span className="sm:hidden">Secure</span>
           </span>
         </div>
 
-        {/* page & zoom controls */}
-        <div className="flex items-center gap-1 rounded-full border border-outline bg-ink px-2 py-1.5 sm:gap-2 sm:px-3">
+        {/* page & zoom controls (own row on small screens) */}
+        <div className="order-last flex w-full justify-center lg:order-none lg:w-auto">
+        <div className="flex items-center gap-1 rounded-full border border-outline bg-ink px-2 py-1 sm:gap-2 sm:px-3 sm:py-1.5">
           <IconButton label="Previous page" disabled={currentPage <= 1} onClick={() => goToPage(currentPage - 1)}>
             <MdChevronLeft className="text-[18px]" />
           </IconButton>
@@ -146,6 +143,7 @@ export function ExamViewer({ session }: { session: PupilSession }) {
             <MdZoomIn className="text-[17px]" />
           </IconButton>
         </div>
+        </div>
 
         <div className="flex items-center gap-3">
           {remaining !== null && (
@@ -160,16 +158,21 @@ export function ExamViewer({ session }: { session: PupilSession }) {
               <span className="font-code text-code-sm font-semibold tabular-nums tracking-wider">{formatCountdown(remaining)}</span>
             </div>
           )}
-          <IconButton label={isFullscreen ? 'Exit full screen' : 'Full screen'} onClick={toggleFullscreen} bordered>
-            {isFullscreen ? <MdFullscreenExit className="text-[18px]" /> : <MdFullscreen className="text-[18px]" />}
-          </IconButton>
+          {CAN_FULLSCREEN && (
+            <IconButton label={isFullscreen ? 'Exit full screen' : 'Full screen'} onClick={toggleFullscreen} bordered>
+              {isFullscreen ? <MdFullscreenExit className="text-[18px]" /> : <MdFullscreen className="text-[18px]" />}
+            </IconButton>
+          )}
         </div>
       </header>
 
       {/* ------------------------------------------------------------------ document */}
-      <main ref={scrollRef} onScroll={onScroll} className="relative flex-1 overflow-y-auto overflow-x-auto bg-ink px-4 py-6 sm:px-8 sm:py-8">
+      <main
+        ref={scrollRef}
+        onScroll={onScroll}
+        className="relative flex-1 overflow-auto overscroll-contain bg-ink px-2 py-4 [-webkit-overflow-scrolling:touch] sm:px-8 sm:py-8"
+      >
         <PdfDocument
-          token={token}
           zoom={ZOOM_STEPS[zoomIndex]}
           watermark={state.device.label}
           hidden={hidePaper}
@@ -183,26 +186,13 @@ export function ExamViewer({ session }: { session: PupilSession }) {
         )}
       </main>
 
-      {/* privacy shield while the pupil is away or the connection is being re-validated */}
+      {/* privacy shield while the pupil is away */}
       {hidePaper && !security.prompt && (
         <div className="pointer-events-none fixed inset-x-0 bottom-12 top-16 z-20 flex items-center justify-center p-6">
           <div className="flex max-w-sm flex-col items-center gap-3 rounded-2xl border border-outline bg-surface-container/95 p-6 text-center shadow-2xl animate-surface-enter">
-            {!connected ? (
-              <>
-                <MdWifiOff className="text-[28px] text-error" aria-hidden="true" />
-                <p className="text-title-md font-semibold text-on-surface">Connection lost</p>
-                <p className="text-body-sm text-on-surface-variant">
-                  Your paper is hidden while we reconnect and confirm your session. Please stay on this page.
-                </p>
-                <Spinner className="mt-1" />
-              </>
-            ) : (
-              <>
-                <MdVisibilityOff className="text-[28px] text-warning" aria-hidden="true" />
-                <p className="text-title-md font-semibold text-on-surface">Paper hidden</p>
-                <p className="text-body-sm text-on-surface-variant">Return to this window to continue your examination.</p>
-              </>
-            )}
+            <MdVisibilityOff className="text-[28px] text-warning" aria-hidden="true" />
+            <p className="text-title-md font-semibold text-on-surface">Paper hidden</p>
+            <p className="text-body-sm text-on-surface-variant">Return to this window to continue your examination.</p>
           </div>
         </div>
       )}

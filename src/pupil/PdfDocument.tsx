@@ -1,52 +1,48 @@
 import { useEffect, useRef, useState, type CSSProperties, type RefObject } from 'react'
+// The legacy build supports older mobile browsers (e.g. iPads/iPhones that are a few iOS versions behind).
 import {
   GlobalWorkerOptions,
   getDocument,
   type PDFDocumentLoadingTask,
   type PDFDocumentProxy,
   type RenderTask,
-} from 'pdfjs-dist'
-import workerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url'
+} from 'pdfjs-dist/legacy/build/pdf.mjs'
+import workerUrl from 'pdfjs-dist/legacy/build/pdf.worker.min.mjs?url'
 import { MdErrorOutline, MdRefresh } from 'react-icons/md'
-import { ApiError } from '../lib/api.ts'
 import { Spinner } from '../components/ui.tsx'
+import { EXAM_PDF_URL } from '../exam/document.ts'
 
 GlobalWorkerOptions.workerSrc = workerUrl
 
-/** Max canvas backing-store width; keeps memory sane on high-DPI screens when zoomed in. */
+/** PDF.js runtime data (fonts, cmaps, decoders), copied to /pdfjs/ by the Vite build. */
+const PDFJS_ASSETS = `${import.meta.env.BASE_URL}pdfjs/`
+
+/** Canvas limits: iOS Safari refuses canvases above ~16.7M pixels and has a small total canvas budget. */
 const MAX_CANVAS_WIDTH = 4096
+const MAX_CANVAS_PIXELS = 8_000_000
 /** Fit-to-width never exceeds this CSS width at 100% zoom (comfortable reading measure). */
 const MAX_FIT_WIDTH = 920
-const PAGE_GUTTER = 32
 
 interface PageSize {
   width: number
   height: number
 }
 
-async function fetchExamPdf(token: string): Promise<Uint8Array> {
-  // The document is fetched with the device token and handed straight to PDF.js.
-  // No blob/object URL is created, so there is no link to open or save.
-  const res = await fetch('/api/exam/document', {
-    headers: { Authorization: `Bearer ${token}` },
-    cache: 'no-store',
-    credentials: 'omit',
-  })
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}))
-    throw new ApiError(res.status, body.error ?? 'error', body.message ?? 'The examination paper could not be loaded.')
-  }
+async function fetchExamPdf(): Promise<Uint8Array> {
+  // Handed straight to PDF.js; no blob/object URL is created for the viewer.
+  const res = await fetch(EXAM_PDF_URL)
+  if (!res.ok) throw new Error(`The examination paper could not be loaded (HTTP ${res.status}).`)
   return new Uint8Array(await res.arrayBuffer())
 }
 
 function openPdf(data: Uint8Array): PDFDocumentLoadingTask {
   return getDocument({
     data, // transferred to the worker, not kept on the main thread
-    cMapUrl: '/pdfjs/cmaps/',
+    cMapUrl: `${PDFJS_ASSETS}cmaps/`,
     cMapPacked: true,
-    standardFontDataUrl: '/pdfjs/standard_fonts/',
-    wasmUrl: '/pdfjs/wasm/',
-    iccUrl: '/pdfjs/iccs/',
+    standardFontDataUrl: `${PDFJS_ASSETS}standard_fonts/`,
+    wasmUrl: `${PDFJS_ASSETS}wasm/`,
+    iccUrl: `${PDFJS_ASSETS}iccs/`,
     enableXfa: false,
   })
 }
@@ -58,17 +54,15 @@ function watermarkStyle(label: string): CSSProperties {
 }
 
 export function PdfDocument({
-  token,
   zoom,
   watermark,
   hidden,
   scrollRef,
   onLoaded,
 }: {
-  token: string
   zoom: number
   watermark: string
-  /** Blank the pages (focus lost, disconnected) without unloading the document. */
+  /** Blank the pages (focus lost) without unloading the document. */
   hidden: boolean
   scrollRef: RefObject<HTMLDivElement | null>
   onLoaded: (numPages: number) => void
@@ -88,7 +82,7 @@ export function PdfDocument({
   useEffect(() => {
     let cancelled = false
     let task: PDFDocumentLoadingTask | null = null
-    fetchExamPdf(token)
+    fetchExamPdf()
       .then((data) => {
         if (cancelled) return null
         task = openPdf(data)
@@ -111,13 +105,21 @@ export function PdfDocument({
         onLoadedRef.current(loaded.numPages)
       })
       .catch((err: unknown) => {
-        if (!cancelled) setError(err instanceof Error ? err.message : 'The examination paper could not be loaded.')
+        if (cancelled) return
+        const offline = typeof navigator !== 'undefined' && navigator.onLine === false
+        setError(
+          offline
+            ? 'This device is offline. Reconnect to the internet once to load the paper.'
+            : err instanceof Error
+              ? err.message
+              : 'The examination paper could not be loaded.',
+        )
       })
     return () => {
       cancelled = true
       void (task as PDFDocumentLoadingTask | null)?.destroy()
     }
-  }, [token, attempt])
+  }, [attempt])
 
   // Track the available width for fit-to-width scaling.
   useEffect(() => {
@@ -157,14 +159,16 @@ export function PdfDocument({
     )
   }
 
-  const fitWidth = Math.min(containerWidth - PAGE_GUTTER * 2, MAX_FIT_WIDTH)
+  // Phones and portrait tablets use (almost) the full width; larger screens get breathing room around the page.
+  const gutter = containerWidth < 640 ? 0 : containerWidth < 960 ? 8 : 32
+  const fitWidth = Math.min(containerWidth - gutter * 2, MAX_FIT_WIDTH)
   const widest = Math.max(...sizes.map((s) => s.width))
   const scale = (Math.max(fitWidth, 240) / widest) * zoom
   const wm = watermarkStyle(watermark)
 
   return (
     <div
-      className="flex flex-col items-center gap-6 transition-[filter,opacity] duration-200"
+      className="flex w-max min-w-full flex-col items-center gap-4 transition-[filter,opacity] duration-200 sm:gap-6"
       style={hidden ? { filter: 'blur(28px)', opacity: 0.35 } : undefined}
       aria-hidden={hidden}
     >
@@ -197,7 +201,7 @@ function PdfPage({
   const cssWidth = Math.floor(size.width * scale)
   const cssHeight = Math.floor(size.height * scale)
 
-  // Only render pages near the viewport.
+  // Only keep pages near the viewport rendered (important for memory on phones and tablets).
   useEffect(() => {
     const el = wrapRef.current
     if (!el) return
@@ -209,19 +213,27 @@ function PdfPage({
     return () => io.disconnect()
   }, [scrollRef])
 
-  // (Re-)render when visible or when the scale changes. Debounced so zooming stays smooth.
+  // (Re-)render when near or when the scale changes. Debounced so zooming stays smooth.
   useEffect(() => {
-    if (!near) return
+    const canvas = canvasRef.current
+    if (!near) {
+      // Release the bitmap of pages far away.
+      if (canvas && canvas.width > 0) {
+        canvas.width = 0
+        canvas.height = 0
+      }
+      return
+    }
     let task: RenderTask | null = null
     let cancelled = false
     const timer = window.setTimeout(async () => {
-      const canvas = canvasRef.current
       if (!canvas) return
       const page = await pdf.getPage(pageNumber)
       if (cancelled) return
-      const ratio = Math.min(window.devicePixelRatio || 1, MAX_CANVAS_WIDTH / cssWidth)
+      const dpr = window.devicePixelRatio || 1
+      const ratio = Math.min(dpr, MAX_CANVAS_WIDTH / cssWidth, Math.sqrt(MAX_CANVAS_PIXELS / (cssWidth * cssHeight)))
       const viewport = page.getViewport({ scale: scale * ratio })
-      // Render to an offscreen canvas then swap in, so the old image stays visible until the new one is ready.
+      // Render offscreen then swap in, so the previous image stays visible until the new one is ready.
       const off = document.createElement('canvas')
       off.width = Math.floor(viewport.width)
       off.height = Math.floor(viewport.height)
@@ -229,9 +241,13 @@ function PdfPage({
       try {
         await task.promise
       } catch {
+        off.width = off.height = 0
         return // cancelled
       }
-      if (cancelled) return
+      if (cancelled) {
+        off.width = off.height = 0
+        return
+      }
       canvas.width = off.width
       canvas.height = off.height
       canvas.getContext('2d')?.drawImage(off, 0, 0)
@@ -243,7 +259,7 @@ function PdfPage({
       window.clearTimeout(timer)
       task?.cancel()
     }
-  }, [near, pdf, pageNumber, scale, cssWidth])
+  }, [near, pdf, pageNumber, scale, cssWidth, cssHeight])
 
   return (
     <div
@@ -259,7 +275,7 @@ function PdfPage({
         onContextMenu={(e) => e.preventDefault()}
         draggable={false}
       />
-      {!rendered && (
+      {(!rendered || !near) && (
         <div className="absolute inset-0 flex items-center justify-center">
           <Spinner className="border-paper-border border-t-accent" />
         </div>

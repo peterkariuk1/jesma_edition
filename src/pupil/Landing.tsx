@@ -48,7 +48,7 @@ export function Landing({ session }: { session: PupilSession }) {
           </p>
 
           <div className="flex flex-col items-center gap-4">
-            <PillButton type="button" onClick={() => void session.register()} loading={session.joining} id="btn-start-exam">
+            <PillButton type="button" onClick={session.register} id="btn-start-exam">
               Start exam
             </PillButton>
 

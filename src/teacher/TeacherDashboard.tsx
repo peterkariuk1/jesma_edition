@@ -23,10 +23,12 @@ import { cx, formatClock, formatShortTime } from '../lib/format.ts'
 import {
   SECURITY_EVENT_LABELS,
   type DeviceKind,
+  type ExamConfigInput,
   type ExamDisplayStatus,
   type TeacherDevice,
   type TeacherSnapshot,
 } from '../shared/types.ts'
+import { closeAccess, configure, endExam, openExam, removeDevice, reopenAccess, startNewSession } from '../exam/engine.ts'
 import type { TeacherSession } from './useTeacherSession.ts'
 
 const STATUS: Record<ExamDisplayStatus, { tone: Tone; label: string }> = {
@@ -43,7 +45,7 @@ const DURATION_OPTIONS = [0, 30, 45, 60, 90, 120, 150, 180]
 type Confirm = { kind: 'end' } | { kind: 'remove'; device: TeacherDevice } | null
 
 export function TeacherDashboard({ session }: { session: TeacherSession }) {
-  const { snapshot, connected, busy, action, actionError, setActionError } = session
+  const { snapshot, action, actionError, setActionError } = session
   const [confirm, setConfirm] = useState<Confirm>(null)
 
   if (!snapshot) {
@@ -68,8 +70,8 @@ export function TeacherDashboard({ session }: { session: TeacherSession }) {
         <Brand subtitle="Teacher control" />
         <div className="flex items-center gap-3">
           <span className="hidden items-center gap-2 rounded-full border border-outline bg-surface-container/60 px-3.5 py-1.5 text-label-sm text-on-surface-variant sm:flex">
-            <Dot tone={connected ? 'success' : 'error'} pulse={!connected} />
-            {connected ? 'Live updates' : 'Reconnecting…'}
+            <Dot tone="success" />
+            Live on this browser
           </span>
           <button
             type="button"
@@ -107,7 +109,7 @@ export function TeacherDashboard({ session }: { session: TeacherSession }) {
 
           <div className="flex shrink-0 flex-wrap items-center gap-3">
             {ended ? (
-              <ActionButton variant="primary" icon={<MdRestartAlt />} busy={busy === 'new'} onClick={() => void action('new', '/api/teacher/new-session')}>
+              <ActionButton variant="primary" icon={<MdRestartAlt />} onClick={() => action(startNewSession)}>
                 Start new session
               </ActionButton>
             ) : (
@@ -115,15 +117,14 @@ export function TeacherDashboard({ session }: { session: TeacherSession }) {
                 variant={active ? 'done' : 'primary'}
                 icon={active ? <MdCheckCircle /> : <MdPlayCircle />}
                 disabled={active}
-                busy={busy === 'open'}
-                onClick={() => void action('open', '/api/teacher/open')}
+                onClick={() => action((s) => openExam(s))}
               >
                 {active ? 'Examination open' : 'Open examination'}
               </ActionButton>
             )}
 
             {active && !exam.admissionOpen ? (
-              <ActionButton variant="primary" icon={<MdLockOpen />} busy={busy === 'reopen'} onClick={() => void action('reopen', '/api/teacher/reopen-access')}>
+              <ActionButton variant="primary" icon={<MdLockOpen />} onClick={() => action(reopenAccess)}>
                 Reopen access
               </ActionButton>
             ) : (
@@ -131,14 +132,13 @@ export function TeacherDashboard({ session }: { session: TeacherSession }) {
                 variant="warning"
                 icon={<MdLockClock />}
                 disabled={!active}
-                busy={busy === 'close'}
-                onClick={() => void action('close', '/api/teacher/close-access')}
+                onClick={() => action(closeAccess)}
               >
                 Close new device access
               </ActionButton>
             )}
 
-            <ActionButton variant="danger" icon={<MdStopCircle />} disabled={!active} busy={busy === 'end'} onClick={() => setConfirm({ kind: 'end' })}>
+            <ActionButton variant="danger" icon={<MdStopCircle />} disabled={!active} onClick={() => setConfirm({ kind: 'end' })}>
               End examination
             </ActionButton>
           </div>
@@ -195,9 +195,8 @@ export function TeacherDashboard({ session }: { session: TeacherSession }) {
           <>
             <ModalButton
               tone="error"
-              disabled={busy === 'end'}
-              onClick={async () => {
-                await action('end', '/api/teacher/end')
+              onClick={() => {
+                action((s) => endExam(s, 'teacher'))
                 setConfirm(null)
               }}
             >
@@ -224,9 +223,11 @@ export function TeacherDashboard({ session }: { session: TeacherSession }) {
           <>
             <ModalButton
               tone="error"
-              disabled={busy === 'remove'}
-              onClick={async () => {
-                if (confirm?.kind === 'remove') await action('remove', `/api/teacher/devices/${confirm.device.id}/remove`)
+              onClick={() => {
+                if (confirm?.kind === 'remove') {
+                  const id = confirm.device.id
+                  action((s) => removeDevice(s, id))
+                }
                 setConfirm(null)
               }}
             >
@@ -254,14 +255,12 @@ export function TeacherDashboard({ session }: { session: TeacherSession }) {
 function ActionButton({
   variant,
   icon,
-  busy,
   disabled,
   onClick,
   children,
 }: {
   variant: 'primary' | 'warning' | 'danger' | 'done'
   icon: ReactNode
-  busy?: boolean
   disabled?: boolean
   onClick: () => void
   children: ReactNode
@@ -276,14 +275,14 @@ function ActionButton({
     <button
       type="button"
       onClick={onClick}
-      disabled={disabled || busy}
+      disabled={disabled}
       className={cx(
         'flex items-center gap-2 whitespace-nowrap rounded-full px-5 py-2.5 text-label-lg font-semibold uppercase transition-all duration-150 ease-standard',
         'disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:brightness-100',
         styles[variant],
       )}
     >
-      {busy ? <Spinner className="h-[18px] w-[18px] border-current/30 border-t-current" /> : <span className="text-[18px]">{icon}</span>}
+      <span className="text-[18px]">{icon}</span>
       {children}
     </button>
   )
@@ -331,13 +330,13 @@ function Settings({ snapshot, session }: { snapshot: TeacherSnapshot; session: T
   const editable = exam.status === 'not_started'
   const [mode, setMode] = useState<'immediate' | 'scheduled'>(exam.scheduledOpenAt ? 'scheduled' : 'immediate')
   const [time, setTime] = useState('')
-  const save = (body: object) => session.action('config', '/api/teacher/config', body)
+  const save = (input: ExamConfigInput) => session.action((s) => configure(s, input))
 
   const selectClass =
     'w-full rounded-lg border border-outline bg-ink px-3 py-2 text-label-lg font-medium text-on-surface outline-none transition-colors focus:border-accent disabled:opacity-60'
 
   return (
-    <Panel icon={<MdTune />} title="Session settings" subtitle={editable ? 'Optional. Applied when you open the examination.' : 'Locked while the session is running.'}>
+    <Panel icon={<MdTune />} title="Session settings" subtitle={editable ? 'Optional. Applied when you open the examination.' : exam.status === 'ended' ? 'Start a new session to change settings.' : 'Locked while the session is running.'}>
       <div className="space-y-4">
         <div>
           <span className="mb-1.5 block text-label-sm font-medium text-on-surface-variant">Opening</span>
@@ -349,7 +348,7 @@ function Settings({ snapshot, session }: { snapshot: TeacherSnapshot; session: T
                 disabled={!editable}
                 onClick={() => {
                   setMode(m)
-                  if (m === 'immediate' && exam.scheduledOpenAt) void save({ scheduledOpenAt: null })
+                  if (m === 'immediate' && exam.scheduledOpenAt) save({ scheduledOpenAt: null })
                 }}
                 className={cx(
                   'rounded-lg border bg-ink px-3 py-2 text-center text-label-sm transition-colors disabled:opacity-60',
@@ -368,7 +367,7 @@ function Settings({ snapshot, session }: { snapshot: TeacherSnapshot; session: T
                     <MdSchedule className="text-[16px]" aria-hidden="true" />
                     Opens automatically at {formatShortTime(exam.scheduledOpenAt)}
                   </span>
-                  <button type="button" className="font-semibold hover:underline" onClick={() => void save({ scheduledOpenAt: null })}>
+                  <button type="button" className="font-semibold hover:underline" onClick={() => save({ scheduledOpenAt: null })}>
                     Clear
                   </button>
                 </div>
@@ -386,7 +385,7 @@ function Settings({ snapshot, session }: { snapshot: TeacherSnapshot; session: T
                     disabled={!time}
                     onClick={() => {
                       const at = nextOccurrence(time)
-                      if (at) void save({ scheduledOpenAt: at })
+                      if (at) save({ scheduledOpenAt: at })
                     }}
                     className="whitespace-nowrap rounded-lg bg-accent px-4 py-2 text-label-sm font-semibold text-ink transition-all hover:brightness-110 disabled:opacity-40"
                   >
@@ -404,7 +403,7 @@ function Settings({ snapshot, session }: { snapshot: TeacherSnapshot; session: T
             className={selectClass}
             disabled={!editable}
             value={exam.admissionWindowMinutes}
-            onChange={(e) => void save({ admissionWindowMinutes: Number(e.target.value) })}
+            onChange={(e) => save({ admissionWindowMinutes: Number(e.target.value) })}
           >
             {ADMISSION_OPTIONS.map((m) => (
               <option key={m} value={m}>
@@ -423,7 +422,7 @@ function Settings({ snapshot, session }: { snapshot: TeacherSnapshot; session: T
             className={selectClass}
             disabled={!editable}
             value={exam.durationMinutes}
-            onChange={(e) => void save({ durationMinutes: Number(e.target.value) })}
+            onChange={(e) => save({ durationMinutes: Number(e.target.value) })}
           >
             {DURATION_OPTIONS.map((m) => (
               <option key={m} value={m}>

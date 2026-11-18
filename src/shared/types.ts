@@ -1,6 +1,6 @@
 /**
- * Types shared between the backend (server/) and the frontend (src/).
- * Keep this file free of runtime imports so both sides can consume it.
+ * Types shared by the examination engine and the UI.
+ * Keep this file free of runtime imports.
  */
 
 export type ExamStatus = 'not_started' | 'active' | 'ended'
@@ -58,10 +58,9 @@ export interface PublicExamInfo {
 
 export interface PupilState {
   phase: PupilPhase
-  device: { id: string; label: string; violations: number } | null
+  device: { id: string; label: string; violations: number; admittedAt: number | null } | null
   exam: PublicExamInfo
   escalationThreshold: number
-  serverTime: number
 }
 
 export interface TeacherDevice {
@@ -109,7 +108,6 @@ export interface TeacherSnapshot {
   events: TeacherEvent[]
   counts: { waiting: number; admitted: number; connected: number; flagged: number }
   escalationThreshold: number
-  serverTime: number
 }
 
 export interface TeacherAlert {

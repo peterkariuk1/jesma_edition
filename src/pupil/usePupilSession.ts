@@ -1,161 +1,147 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { io, type Socket } from 'socket.io-client'
-import { api, ApiError } from '../lib/api.ts'
-import type { PublicExamInfo, PupilState, SecurityEventType } from '../shared/types.ts'
+import { useCallback, useEffect, useState } from 'react'
+import * as bus from '../exam/bus.ts'
+import { EXAM_DOCUMENT_TITLE } from '../exam/document.ts'
+import { ExamError, isJoinable, leave, pupilState, recordEvent, registerDevice, revalidate } from '../exam/engine.ts'
+import { getExamState, mutate, subscribeExamState, useExamState } from '../exam/store.ts'
+import type { SecurityEventType } from '../shared/types.ts'
 
-const TOKEN_KEY = 'examsecure.device'
+/** Per-tab device identity: survives refreshes, but each tab is its own device. */
+const DEVICE_KEY = 'examsecure.device'
+/** Length of the "paper released" moment between the waiting room and the viewer. */
+const RELEASE_MS = 1600
+/** How often a pupil tab announces itself to teacher tabs. */
+const PRESENCE_INTERVAL_MS = 10_000
 
-/** Why registering a new device was refused (no device session exists in that case). */
+/** Why starting was refused (no device record exists in that case). */
 export type JoinRefusal = 'admission_closed' | 'exam_ended' | null
 
-function readToken() {
+function readDeviceId(): string | null {
   try {
-    return window.localStorage.getItem(TOKEN_KEY)
+    return sessionStorage.getItem(DEVICE_KEY)
   } catch {
     return null
   }
 }
 
-function writeToken(token: string | null) {
+function writeDeviceId(id: string | null) {
   try {
-    if (token) window.localStorage.setItem(TOKEN_KEY, token)
-    else window.localStorage.removeItem(TOKEN_KEY)
+    if (id) sessionStorage.setItem(DEVICE_KEY, id)
+    else sessionStorage.removeItem(DEVICE_KEY)
   } catch {
-    /* storage unavailable (private mode) – session lasts for this page only */
+    /* storage unavailable — the session lasts for this page only */
   }
 }
 
 export function usePupilSession() {
-  const [token, setToken] = useState<string | null>(readToken)
-  const [state, setState] = useState<PupilState | null>(null)
-  const [connected, setConnected] = useState(false)
-  const [everConnected, setEverConnected] = useState(false)
-  const [joining, setJoining] = useState(false)
-  const [joinError, setJoinError] = useState<string | null>(null)
+  const examState = useExamState()
+  const [storedId, setStoredId] = useState<string | null>(readDeviceId)
   const [refusal, setRefusal] = useState<JoinRefusal>(null)
-  const [publicExam, setPublicExam] = useState<PublicExamInfo | null>(null)
-  /** Brief 'paper released' moment between the waiting room and the viewer. */
-  const [releasing, setReleasing] = useState(false)
-  const lastPhase = useRef<PupilState['phase'] | null>(null)
-  /** Server clock offset so countdowns are correct even if the device clock is wrong. */
-  const [clockOffset, setClockOffset] = useState(0)
+  const [joinError, setJoinError] = useState<string | null>(null)
 
-  const applyState = useCallback((s: PupilState) => {
-    setClockOffset(s.serverTime - Date.now())
-    if (s.phase === 'invalid') {
-      writeToken(null)
-      setToken(null)
-      setState(null)
-      return
-    }
-    if (s.phase === 'admitted' && (lastPhase.current === 'waiting' || lastPhase.current === 'access_closed')) {
-      setReleasing(true)
-      window.setTimeout(() => setReleasing(false), 1600)
-    }
-    lastPhase.current = s.phase
-    setState(s)
-  }, [])
+  const lookup = storedId ? pupilState(examState, storedId, EXAM_DOCUMENT_TITLE) : null
+  // A stored id the shared state doesn't know (e.g. browser data cleared) is simply forgotten.
+  const deviceId = lookup && lookup.phase !== 'invalid' ? storedId : null
+  const state = deviceId ? lookup : null
+  const exam = pupilState(examState, null, EXAM_DOCUMENT_TITLE).exam
+  const phase = state?.phase ?? null
 
-  // Real-time connection for registered devices.
   useEffect(() => {
-    if (!token) return
-    const socket: Socket = io({
-      auth: { role: 'pupil', token },
-      transports: ['websocket', 'polling'],
-      reconnectionDelay: 1000,
-      reconnectionDelayMax: 5000,
-    })
-    socket.on('connect', () => {
-      setConnected(true)
-      setEverConnected(true)
-    })
-    socket.on('disconnect', () => setConnected(false))
-    socket.on('connect_error', () => setConnected(false))
-    socket.on('pupil:state', applyState)
-    return () => {
-      socket.disconnect()
-    }
-  }, [token, applyState])
+    if (storedId && !deviceId) writeDeviceId(null)
+  }, [storedId, deviceId])
 
-  // Devices refused at registration poll the public status and re-try automatically.
-  const register = useCallback(async () => {
-    setJoining(true)
+  // Waiting devices admit themselves as soon as the examination accepts them (opened / access reopened).
+  const examStatus = examState.exam.status
+  const admissionOpen = examState.exam.admissionOpen
+  useEffect(() => {
+    if (deviceId && phase === 'waiting' && examStatus === 'active' && admissionOpen) {
+      mutate((s) => revalidate(s, deviceId))
+    }
+  }, [deviceId, phase, examStatus, admissionOpen])
+
+  const register = useCallback(() => {
     setJoinError(null)
     try {
-      const res = await api<{ token: string; state: PupilState }>('/api/pupil/register', { method: 'POST' })
-      writeToken(res.token)
+      const device = mutate((s) => registerDevice(s, navigator.userAgent))
+      writeDeviceId(device.id)
+      setStoredId(device.id)
       setRefusal(null)
-      applyState(res.state)
-      setToken(res.token)
-      return true
     } catch (err) {
-      if (err instanceof ApiError && (err.code === 'admission_closed' || err.code === 'exam_ended')) {
+      if (err instanceof ExamError && (err.code === 'admission_closed' || err.code === 'exam_ended')) {
         setRefusal(err.code)
-        return true
+      } else {
+        setJoinError('Unable to start on this browser. Please check that it is not in private mode and try again.')
       }
-      setJoinError(err instanceof Error ? err.message : 'Unable to start. Please try again.')
-      return false
-    } finally {
-      setJoining(false)
     }
-  }, [applyState])
+  }, [])
 
+  // A refused device joins automatically when the teacher reopens access or starts a new session.
+  // One-shot: registering changes the state, which re-notifies this very listener synchronously.
   useEffect(() => {
-    if (!refusal) return
-    let cancelled = false
-    const poll = async () => {
-      try {
-        const exam = await api<PublicExamInfo>('/api/exam/public')
-        if (cancelled) return
-        setPublicExam(exam)
-        const joinable = exam.status === 'not_started' || (exam.status === 'active' && exam.admissionOpen)
-        if (joinable) await register()
-      } catch {
-        /* offline – keep polling */
-      }
-    }
-    const id = window.setInterval(poll, 4000)
+    if (!refusal || deviceId) return
+    let done = false
+    const unsubscribe = subscribeExamState(() => {
+      if (done || !isJoinable(getExamState())) return
+      done = true
+      unsubscribe()
+      register()
+    })
     return () => {
-      cancelled = true
-      window.clearInterval(id)
+      done = true
+      unsubscribe()
     }
-  }, [refusal, register])
+  }, [refusal, deviceId, register])
 
-  /** Leave the waiting room (only meaningful before admission) or clear an ended session. */
-  const reset = useCallback(async () => {
-    const t = token
-    writeToken(null)
-    setToken(null)
-    setState(null)
+  // Presence: lets teacher tabs show this device as online.
+  useEffect(() => {
+    if (!deviceId) return
+    const announce = () => bus.post({ type: 'presence', deviceId })
+    const bye = () => bus.post({ type: 'bye', deviceId })
+    announce()
+    const timer = window.setInterval(announce, PRESENCE_INTERVAL_MS)
+    const unsubscribe = bus.subscribe((m) => {
+      if (m.type === 'ping') announce()
+    })
+    document.addEventListener('visibilitychange', announce)
+    window.addEventListener('pageshow', announce)
+    window.addEventListener('pagehide', bye)
+    return () => {
+      window.clearInterval(timer)
+      unsubscribe()
+      document.removeEventListener('visibilitychange', announce)
+      window.removeEventListener('pageshow', announce)
+      window.removeEventListener('pagehide', bye)
+    }
+  }, [deviceId])
+
+  // Brief "paper released" moment right after admission.
+  const admittedAt = state?.device?.admittedAt ?? null
+  const [now, setNow] = useState(() => Date.now())
+  const inRelease = phase === 'admitted' && admittedAt !== null && now - admittedAt < RELEASE_MS
+  useEffect(() => {
+    if (!inRelease) return
+    const id = window.setInterval(() => setNow(Date.now()), 150)
+    return () => window.clearInterval(id)
+  }, [inRelease])
+  const releasing = inRelease
+
+  /** Leave the waiting room (only before admission) or clear an ended session. */
+  const reset = useCallback(() => {
+    if (deviceId) mutate((s) => leave(s, deviceId))
+    writeDeviceId(null)
+    setStoredId(null)
     setRefusal(null)
-    setPublicExam(null)
-    setEverConnected(false)
-    if (t) await api('/api/pupil/leave', { method: 'POST', token: t }).catch(() => {})
-  }, [token])
+  }, [deviceId])
 
   const reportEvent = useCallback(
     (type: SecurityEventType) => {
-      if (!token) return
-      api('/api/pupil/events', { method: 'POST', body: { type }, token, keepalive: true }).catch(() => {})
+      if (!deviceId) return
+      const alert = mutate((s) => recordEvent(s, deviceId, type))
+      if (alert) bus.post({ type: 'alert', alert })
     },
-    [token],
+    [deviceId],
   )
 
-  return {
-    token,
-    state,
-    releasing,
-    connected,
-    everConnected,
-    joining,
-    joinError,
-    refusal,
-    publicExam,
-    register,
-    reset,
-    reportEvent,
-    clockOffset,
-  }
+  return { deviceId, state, exam, releasing, joinError, refusal, register, reset, reportEvent }
 }
 
 export type PupilSession = ReturnType<typeof usePupilSession>

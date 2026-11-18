@@ -8,13 +8,12 @@ import {
   MdInfoOutline,
   MdLock,
   MdLockOpen,
-  MdWifiOff,
 } from 'react-icons/md'
-import { Ambient, BrandMark, Spinner, StatusChip, SiteFooter, type Tone } from '../components/ui.tsx'
+import { Ambient, BrandMark, StatusChip, SiteFooter, type Tone } from '../components/ui.tsx'
 import { cx, formatShortTime } from '../lib/format.ts'
 import type { PupilSession } from './usePupilSession.ts'
 
-type View = 'waiting' | 'released' | 'closed' | 'ended' | 'removed' | 'disconnected'
+type View = 'waiting' | 'released' | 'closed' | 'ended' | 'removed'
 
 interface ViewConfig {
   tone: Tone
@@ -78,24 +77,13 @@ const VIEWS: Record<View, ViewConfig> = {
     body: 'Your teacher has removed this device from the examination. The paper is no longer available on this device.',
     badgeClass: 'border-error/40 bg-[#261616] text-error',
   },
-  disconnected: {
-    tone: 'error',
-    icon: <MdWifiOff />,
-    chip: 'Connection lost',
-    line1: 'Connection interrupted.',
-    line2: 'Reconnecting…',
-    line2Class: 'text-error',
-    body: 'We are trying to reconnect to your teacher’s examination session. Please stay on this page — your place is kept.',
-    badgeClass: 'border-error/40 bg-[#261616] text-error',
-  },
 }
 
 export function WaitingRoom({ session }: { session: PupilSession }) {
-  const { state, connected, refusal, releasing, publicExam } = session
+  const { state, releasing, exam } = session
 
   let view: View
-  if (!session.token) view = refusal === 'exam_ended' ? 'ended' : 'closed'
-  else if (!connected) view = 'disconnected'
+  if (!session.deviceId) view = exam.status === 'ended' ? 'ended' : 'closed'
   else if (releasing) view = 'released'
   else if (state?.phase === 'access_closed') view = 'closed'
   else if (state?.phase === 'ended') view = 'ended'
@@ -103,9 +91,9 @@ export function WaitingRoom({ session }: { session: PupilSession }) {
   else view = 'waiting'
 
   const v = VIEWS[view]
-  const scheduledOpenAt = state?.exam.scheduledOpenAt ?? publicExam?.scheduledOpenAt ?? null
+  const scheduledOpenAt = state?.exam.scheduledOpenAt ?? exam.scheduledOpenAt
   const live = view === 'waiting' || view === 'released'
-  const canLeave = view === 'waiting' || view === 'ended' || (view === 'closed' && !session.token)
+  const canLeave = view === 'waiting' || view === 'ended' || (view === 'closed' && !session.deviceId)
 
   return (
     <div className="relative flex min-h-screen flex-col justify-between overflow-x-hidden">
@@ -116,7 +104,7 @@ export function WaitingRoom({ session }: { session: PupilSession }) {
           {canLeave ? (
             <button
               type="button"
-              onClick={() => void session.reset()}
+              onClick={session.reset}
               title={view === 'waiting' ? 'Leave the waiting room' : 'Back to start'}
               aria-label={view === 'waiting' ? 'Leave the waiting room' : 'Back to start'}
               className="flex h-8 w-8 items-center justify-center rounded-full border border-outline bg-surface-container text-accent transition-colors duration-150 hover:border-accent"
@@ -132,8 +120,8 @@ export function WaitingRoom({ session }: { session: PupilSession }) {
           </div>
         </div>
         <div className="flex items-center gap-2 rounded-full border border-outline bg-surface-container/60 px-3.5 py-1.5 text-label-sm text-on-surface-variant">
-          <span className={cx('h-2 w-2 rounded-full', connected || !session.token ? 'bg-success' : 'bg-error animate-pulse')} />
-          <span>{connected || !session.token ? 'Live' : 'Offline'}</span>
+          <span className="h-2 w-2 rounded-full bg-success" />
+          <span>Live</span>
         </div>
       </header>
 
@@ -155,7 +143,7 @@ export function WaitingRoom({ session }: { session: PupilSession }) {
                 v.badgeClass,
               )}
             >
-              {view === 'disconnected' ? <Spinner className="h-7 w-7 border-error/30 border-t-error" /> : v.icon}
+              {v.icon}
             </div>
           </div>
 
@@ -189,14 +177,8 @@ export function WaitingRoom({ session }: { session: PupilSession }) {
               </p>
             )}
             <div className="flex flex-wrap items-center justify-center gap-3 text-label-sm text-on-surface-variant">
-              <span className={cx('h-2 w-2 rounded-full', connected || !session.token ? 'bg-success' : 'bg-error')} />
-              <span>
-                {!session.token
-                  ? 'Checking for access automatically'
-                  : connected
-                    ? 'Live connection established'
-                    : 'Attempting to reconnect'}
-              </span>
+              <span className="h-2 w-2 rounded-full bg-success" />
+              <span>{session.deviceId ? 'Live updates active' : 'You’ll join automatically if access reopens'}</span>
               <span>•</span>
               <MdLock className="text-[15px] text-accent" aria-hidden="true" />
               <span>Secure session</span>
@@ -204,7 +186,7 @@ export function WaitingRoom({ session }: { session: PupilSession }) {
             {view === 'ended' && (
               <button
                 type="button"
-                onClick={() => void session.reset()}
+                onClick={session.reset}
                 className="mt-2 rounded-full border border-outline px-5 py-2 text-label-sm font-semibold uppercase tracking-wider text-on-surface-variant transition-colors duration-150 hover:border-outline-variant hover:text-on-surface"
               >
                 Back to start
@@ -213,7 +195,7 @@ export function WaitingRoom({ session }: { session: PupilSession }) {
           </div>
         </div>
 
-        {(live || view === 'closed' || view === 'disconnected') && (
+        {(live || view === 'closed') && (
           <div className="mt-8 flex items-center gap-2 text-label-sm text-on-surface-variant">
             <MdInfoOutline className="shrink-0 text-[16px] text-accent" aria-hidden="true" />
             <span>Do not close or switch browser tabs. Focus monitoring starts automatically when your paper opens.</span>

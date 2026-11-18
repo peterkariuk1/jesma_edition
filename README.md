@@ -5,121 +5,120 @@ A focused, teacher-controlled examination PDF viewer. Pupils press **Start Exam*
 - **Pupil journey:** open app → START EXAM → wait for teacher → view PDF
 - **Teacher journey:** Teacher access → enter code → open exam → monitor devices → close access / end exam
 
+This is a **frontend-only** application. There is no server, API or database. Everything runs in the browser, and it deploys to Vercel (or any static host) as plain files.
+
+> ## ⚠️ Important: one browser, not many devices
+>
+> Without a backend, the examination state lives in the browser's own storage (`localStorage`). Tabs and windows of the **same browser on the same device** stay in sync through `BroadcastChannel`, falling back to `storage` events where that's unavailable.
+>
+> **Teacher actions on one phone or computer do not reach pupils on other phones or computers.** Browser storage cannot cross devices, and this version deliberately uses no external service. In practice:
+>
+> - The full workflow works when the teacher and pupils use **the same browser** (separate tabs or windows on one machine). This is also how it is tested.
+> - On separate devices, each device has its own independent examination state.
+>
+> The sync layer is isolated (see [Adding cross-device sync](#adding-cross-device-sync)), so a real-time service can be added later without changing the screens.
+
 ## Stack
 
-| Layer | Tech |
-| --- | --- |
-| Frontend | React 19 + TypeScript, Vite, Tailwind CSS v4 (tokens from `design/`), `react-icons` (Material set), PDF.js |
-| Backend | Node.js + Express 5, Socket.IO (real-time), JSON-file persistence (`server/data/state.json`) |
+React 19 + TypeScript, Vite, Tailwind CSS v4 (tokens from `design/`), `react-icons` (Material set), PDF.js (legacy build, for older iOS and Android browsers).
 
-The examination paper is the **single PDF in `docs/`**, discovered automatically at startup. If there are several, the first alphabetically is used and a warning is logged. The PDF is never placed in `public/` or the build; it's streamed by the server only to admitted devices.
+## Running locally
 
-## Requirements
-
-- Node.js **22+** (uses `process.loadEnvFile`)
-
-## Setup
+Requires Node.js 20.19+ (22 recommended).
 
 ```bash
 npm install
-cp .env.example .env      # then edit TEACHER_ACCESS_CODE before a real examination
+npm run dev        # http://localhost:5173  (teacher: /teacher)
 ```
 
-> **Quote values containing `#` in `.env`.** `TEACHER_ACCESS_CODE="12345678abcd#"` works, but unquoted `12345678abcd#` is read as `12345678abcd` (everything after `#` is a comment).
-
-## Running
-
-### Development
-
-```bash
-npm run dev
-```
-
-Starts the API server (port `3001`) and the Vite dev server (`http://localhost:5173`, proxied to the API). Open the Vite URL. Vite also prints a **Network** URL for pupils' devices on the same Wi-Fi/LAN.
-
-### Production / examination day
-
-```bash
-npm run build
-npm start
-```
-
-Serves everything from one port (default `http://<this-computer's-IP>:3001`). Pupils open that address, and the teacher goes to `/teacher`. Allow the port through the computer's firewall if pupil devices can't connect.
-
-### Other scripts
+Other scripts:
 
 | Command | Purpose |
 | --- | --- |
+| `npm run build` | Typecheck and build to `dist/` |
+| `npm run preview` | Serve the production build locally |
+| `npm test` | Unit tests for the examination state machine (plain Node, no browser) |
 | `npm run lint` | ESLint |
-| `npm run test:smoke` | End-to-end check of the whole workflow against a running server (`BASE_URL=http://localhost:3001` by default). **It opens, ends and resets the session, so never run it during a real exam.** |
 
-## Configuration (`.env`)
+## Deploying to Vercel
 
-| Variable | Default | Meaning |
+Import the GitHub repository in Vercel. `vercel.json` already sets everything:
+
+- Framework **Vite**, build command `npm run build`, output directory `dist`
+- SPA fallback, so `/teacher`, `/waiting` and `/exam` load the app on refresh
+- Security headers and long-term caching for hashed assets
+
+No environment variables are needed.
+
+## Configuration
+
+Everything is in [`src/config.ts`](src/config.ts):
+
+| Constant | Default | Meaning |
 | --- | --- | --- |
-| `TEACHER_ACCESS_CODE` | `12345678abcd#` | Teacher code (case-sensitive). Checked on the server only. **Change it.** |
-| `PORT` / `HOST` | `3001` / `0.0.0.0` | Where the server listens |
-| `EXAM_TITLE` | from PDF file name | Title shown to pupils and the teacher |
-| `EXAM_DURATION_MINUTES` | `0` | Default time limit (0 = none). Teacher can change it before opening. |
-| `ADMISSION_WINDOW_MINUTES` | `0` | Default auto-close of new-device access after opening (0 = manual) |
-| `VIOLATION_ESCALATION_THRESHOLD` | `3` | Violations before the serious warning and a prominent teacher alert |
-| `TEACHER_SESSION_HOURS` | `12` | Teacher sign-in lifetime |
-| `COOKIE_SECURE` | `false` | Set `true` when served over HTTPS |
+| `TEACHER_ACCESS_CODE` | `12345678bcd#` | Teacher code, case-sensitive |
+| `TEACHER_SESSION_HOURS` | `12` | How long a teacher tab stays signed in |
+| `EXAM_TITLE` | `null` (derived from the PDF file name) | Title shown to pupils and teacher |
+| `EXAM_DEFAULTS.durationMinutes` | `0` | Default time limit (0 = none) |
+| `EXAM_DEFAULTS.admissionWindowMinutes` | `0` | Default auto-close of new-device access after opening |
+| `EXAM_DEFAULTS.escalationThreshold` | `3` | Violations before the serious warning |
+
+> **The teacher code is not a secret.** It ships inside the public JavaScript bundle and anyone can find it by inspecting the site. It keeps casual users out of the dashboard; it is not real authentication.
+
+## The examination paper
+
+The paper is **the single PDF in `docs/`**. At build time Vite finds it with `import.meta.glob`, bundles it unchanged as a hashed asset (`dist/assets/<name>-<hash>.pdf`) and the viewer loads it from there. PDF.js runtime data (fonts, character maps, image decoders) is copied to `dist/pdfjs/` by a small plugin in `vite.config.ts`.
+
+To change the paper, replace the PDF in `docs/` (keep exactly one) and redeploy.
 
 ## How it works
 
-**Examination states:** *Not started* (optionally *Scheduled*) → *Active* (accepting devices, or *new device access closed*) → *Ended*. After ending, the teacher can **Start new session**.
+**States:** *Not started* (optionally *Scheduled*) → *Active* (accepting devices, or *new device access closed*) → *Ended*, then **Start new session**.
 
-- **Start Exam** registers a device and returns a random device token, which is stored in the browser and hashed on the server. Each device gets an anonymous label such as `PUPIL-7F3A`. There are no names or accounts.
-- **Open examination** admits every waiting, connected device in real time. New devices are admitted on arrival while access is open.
-- **Close new device access** refuses new registrations. Admitted pupils stay in. A refused device keeps checking and joins automatically if access is **reopened**.
-- **End examination** (asks for confirmation) closes the paper on every device, shows the ended screen and invalidates all device sessions.
-- **Remove** (asks for confirmation) closes the paper on one device.
-- Optional settings (before opening): a scheduled opening time, auto-close of admission after N minutes, and a time limit. Pupils see the time limit as a countdown, and the exam ends automatically when it runs out.
-- State lives on the server and survives restarts. Refreshing a page re-validates with the server and never bypasses admission.
+- **Start Exam** registers the browser tab as a device with an anonymous label such as `PUPIL-7F3A`. The device id is kept in `sessionStorage`, so a refresh keeps the place and each tab is its own device.
+- **Open examination** lets waiting devices admit themselves immediately. While access is open, new devices are admitted on arrival.
+- **Close new device access** refuses new devices, while admitted pupils stay in. A refused device waits and joins automatically if access is **reopened**.
+- **End examination** (asks for confirmation) closes the paper everywhere and shows the ended screen. **Remove** (asks for confirmation) closes it on one device.
+- **Optional settings** before opening: a scheduled opening time, auto-close of admission, and a time limit. Pupils see the time limit as a countdown, and the exam ends when it runs out.
+- The dashboard shows waiting and admitted counts, online status (from tab heartbeats), time joined, violations and live alerts.
 
-### PDF access control
+### Code layout
 
-`GET /api/exam/document` returns the PDF only if the device token is valid, the device is admitted and not removed, it belongs to the current session, and the examination is active. Otherwise it returns `403`. Responses are `no-store`. The client hands the bytes straight to PDF.js. No blob or download URL is created.
+```
+docs/                    the examination PDF (one file)
+design/                  approved design references
+src/config.ts            app configuration (teacher code, defaults)
+src/exam/engine.ts       pure examination state machine (no DOM/React)
+src/exam/store.ts        persisted cross-tab state (localStorage + notifications)
+src/exam/bus.ts          tab messaging (BroadcastChannel, storage-event fallback)
+src/exam/document.ts     finds and bundles the PDF from docs/
+src/pupil/               landing, waiting room, secure viewer, PDF renderer, security hook
+src/teacher/             access page, dashboard
+scripts/engine-test.mjs  state machine tests
+```
+
+### Adding cross-device sync
+
+`engine.ts` is pure, so it can run anywhere. To synchronise real devices later, back `store.ts` (`getExamState` / `mutate`) and `bus.ts` (`post` / `subscribe`) with a shared real-time service, or run the engine on a small server. The UI only uses `useExamState`, `mutate` and the bus, so it does not need to change.
 
 ## Security measures and their limits
 
 **What the app does**
 
-- Pages render to `<canvas>` only, with no text layer, so the page DOM contains no question text to select, copy, translate or read with extensions.
-- Text selection, context menu, drag, copy/cut, and common shortcuts (print, save, select-all, view-source, dev tools) are blocked. Printing produces a blank page.
-- Each page carries a faint watermark with the device label, which discourages sharing photos.
-- Tab switches and focus loss are detected and recorded. The paper is blurred while the pupil is away, and a warning appears on return. A simultaneous blur and tab switch counts as one violation.
-- The warnings escalate: *"Stay in your examination."*, then at the threshold a serious warning, and the teacher is alerted live. **Nobody is removed automatically**; the teacher decides.
-- Back navigation is intercepted with a "You can't leave the examination" modal and recorded. Closing or reloading the tab triggers the browser's leave-page prompt.
-- When the **PrintScreen** key is detected, the event is recorded and the app tries to clear the clipboard.
-- The teacher code is verified server-side with a constant-time comparison and attempts are rate-limited. The teacher session is an HttpOnly, SameSite=Strict cookie, and the code is never sent to or stored in the browser.
+- Pages are drawn to `<canvas>` only, with no text layer, so the page contains no selectable or copyable question text.
+- Text selection, the context menu, dragging, copy/cut, and common shortcuts (print, save, select-all, view source, dev tools) are blocked. Printing produces a blank page.
+- Each page carries a faint watermark with the device label.
+- Tab switches and focus loss are detected and recorded. The paper is blurred while the pupil is away, and a warning appears on return.
+- Warnings escalate: *"Stay in your examination."*, then a serious warning at the threshold, with a live alert to teacher tabs in the same browser. **Nobody is removed automatically.**
+- Back navigation is intercepted with a warning and recorded. Closing or reloading the tab triggers the browser's leave-page prompt.
 
-**What a web app cannot do.** No browser application can fully prevent:
+**What it cannot do**
 
-- photos of the screen taken with another device (phone camera),
-- OS-level screenshots and screen recording (Snipping Tool, Win+Shift+S, macOS shortcuts, capture software), or
-- help from a person or AI assistant on another device, or from an overlay tool that doesn't take window focus.
+- **The PDF is a public static file.** Anyone who inspects network requests or the built assets can download it. Admission checks are client-side and can be bypassed by someone editing browser storage.
+- No web page can prevent phone-camera photos, OS screenshots or screen recording, help from another device or an AI assistant, or a determined user with developer tools.
 
-A determined user with developer tools or a modified browser can also inspect anything the browser receives, including the PDF bytes for an admitted device.
+These measures discourage casual cheating and make leaving the exam visible. They are not a lockdown. For real enforcement, use managed devices (kiosk or guided-access mode, a lockdown browser) and physical invigilation.
 
-The measures above discourage casual cheating and make leaving the exam **visible to the teacher**. For stronger guarantees, use managed devices: kiosk or assigned-access mode, Chrome OS managed sessions, or a lockdown browser. Physical invigilation still matters.
+## Mobile support
 
-## Project layout
-
-```
-docs/                 the examination PDF (do not rename/move)
-design/               approved design references
-server/
-  config.ts           env config, automatic PDF discovery
-  store.ts            authoritative exam/device state machine + persistence
-  index.ts            Express API, PDF access control, Socket.IO, scheduler
-src/
-  shared/types.ts     types shared by server and client
-  components/ui.tsx   design-system components (pill button, chips, modal…)
-  pupil/              landing, waiting room, secure viewer, PDF renderer, security hook
-  teacher/            access page, dashboard
-scripts/smoke-test.mjs  end-to-end workflow check
-```
-
-To reset all examination state, stop the server and delete `server/data/state.json`.
+Tested at iPhone, Android phone and iPad sizes. Page controls move to their own row on small screens, pages fit the screen width, touch scrolling and pinch zoom work, and canvases stay within iOS Safari's size limits (far-away pages are released to save memory). The full-screen button only appears where the browser supports it (not on iPhone).

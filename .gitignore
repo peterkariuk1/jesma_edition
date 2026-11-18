@@ -23,6 +23,6 @@ dist-ssr
 *.sln
 *.sw?
 
-# ExamSecure runtime data & secrets
+# Local env & Vercel
 .env
-server/data/
+.vercel
